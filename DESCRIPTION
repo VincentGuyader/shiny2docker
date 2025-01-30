@@ -1,0 +1,15 @@
+Package: shiny2docker
+Title: From Shiny to Dockerfile
+Version: 0.0.0.9000
+Authors@R: 
+    person("Vincent", "Guyader", , "vincent@thinkr.fr", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-0671-9270"))
+Description: Allow to create a Dockerfile to deploy shiny application with
+    docker based solution.
+License: MIT + file LICENSE
+Imports: 
+    attachment,
+    dockerfiler
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
