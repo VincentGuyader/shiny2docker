@@ -37,8 +37,8 @@ shiny2docker <- function(path = ".",
     attachment::create_renv_for_prod(path = path, output = lockfile)
 
   }
-  if (!file.exists(".dockerignore")) {
-    create_dockerignore(path = ".dockerignore")
+  if (!file.exists(file.path(dirname(output),".dockerignore"))) {
+    create_dockerignore(path = file.path(dirname(output),".dockerignore"))
   }
 
   dock <- dockerfiler::dock_from_renv(lockfile = lockfile)
