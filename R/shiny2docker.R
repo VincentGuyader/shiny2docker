@@ -31,8 +31,8 @@
 #'   docker_obj$write("Dockerfile")
 #' }
 shiny2docker <- function(path = ".",
-                         lockfile = "renv.lock",
-                         output = "Dockerfile") {
+                         lockfile = file.path(path,"renv.lock"),
+                         output = file.path(path,"Dockerfile")) {
   if (!file.exists(lockfile)) {
     attachment::create_renv_for_prod(path = path, output = lockfile)
 
