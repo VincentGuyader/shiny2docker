@@ -1,6 +1,6 @@
 Package: shiny2docker
 Title: Generate Dockerfiles for Shiny Applications
-Version: 0.0.0.9001
+Version: 0.0.1
 Authors@R: 
     person("Vincent", "Guyader",
            email = "vincent@thinkr.fr",
@@ -13,7 +13,7 @@ Description:
     ensuring reproducibility and consistency across different environments.
 License: MIT + file LICENSE
 Imports: 
-    attachment,
+    attachment (>= 4.3.0),
     dockerfiler
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
