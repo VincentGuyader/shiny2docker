@@ -4,7 +4,21 @@
 \alias{shiny2docker}
 \title{shiny2docker}
 \usage{
-shiny2docker(path = ".", lockfile = "renv.lock", output = "Dockerfile")
+shiny2docker(
+  path = ".",
+  lockfile = file.path(path, "renv.lock"),
+  output = file.path(path, "Dockerfile"),
+  FROM = "rocker/r-base",
+  AS = NULL,
+  sysreqs = TRUE,
+  repos = c(CRAN = "https://cran.rstudio.com/"),
+  expand = FALSE,
+  extra_sysreqs = NULL,
+  use_pak = FALSE,
+  user = NULL,
+  dependencies = NA,
+  sysreqs_platform = "ubuntu"
+)
 }
 \arguments{
 \item{path}{Character. Path to the folder containing the Shiny application (e.g., \code{app.R} or \code{ui.R} and \code{server.R}) along with any other necessary files.}
@@ -12,6 +26,35 @@ shiny2docker(path = ".", lockfile = "renv.lock", output = "Dockerfile")
 \item{lockfile}{Character. Path to the \code{renv.lock} file that specifies the R package dependencies. If the \code{renv.lock} file does not exist, it will be created for production using the \code{attachment::create_renv_for_prod} function.}
 
 \item{output}{Character. Path to the generated Dockerfile. Defaults to \code{"Dockerfile"}.}
+
+\item{FROM}{Docker image to start FROM Default is FROM rocker/r-base}
+
+\item{AS}{The AS of the Dockerfile. Default it \code{NULL}.}
+
+\item{sysreqs}{boolean. If \code{TRUE}, the Dockerfile will contain sysreq installation.}
+
+\item{repos}{character. The URL(s) of the repositories to use for \code{options("repos")}.}
+
+\item{expand}{boolean. If \code{TRUE} each system requirement will have its own \code{RUN} line.}
+
+\item{extra_sysreqs}{character vector. Extra debian system requirements.
+Will be installed with apt-get install.}
+
+\item{use_pak}{boolean. If \code{TRUE} use pak to deal with dependencies  during \code{renv::restore()}. FALSE by default}
+
+\item{user}{Name of the user to specify in the Dockerfile with the USER instruction. Default is \code{NULL}, in which case the user from the FROM image is used.}
+
+\item{dependencies}{What kinds of dependencies to install. Most commonly
+one of the following values:
+\itemize{
+\item \code{NA}: only required (hard) dependencies,
+\item \code{TRUE}: required dependencies plus optional and development
+dependencies,
+\item \code{FALSE}: do not install any dependencies. (You might end up with a
+non-working package, and/or the installation might fail.)
+}}
+
+\item{sysreqs_platform}{System requirements platform.\code{ubuntu} by default. If \code{NULL}, then the  current platform is used. Can be : "ubuntu-22.04" if needed to fit with the \code{FROM} Operating System. Only debian or ubuntu based images are supported}
 }
 \value{
 An object of class \code{dockerfiler}, representing the generated Dockerfile. This object can be further manipulated using \code{dockerfiler} functions before being written to disk.
