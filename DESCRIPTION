@@ -13,7 +13,7 @@ Description:
     ensuring reproducibility and consistency across different environments.
 License: MIT + file LICENSE
 Imports: 
-    attachment (>= 4.3.0),
+    attachment (>= 0.4.3),
     dockerfiler
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
