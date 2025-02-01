@@ -8,7 +8,7 @@ shiny2docker(
   path = ".",
   lockfile = file.path(path, "renv.lock"),
   output = file.path(path, "Dockerfile"),
-  FROM = "rocker/r-base",
+  FROM = "rocker/geospatial",
   AS = NULL,
   sysreqs = TRUE,
   repos = c(CRAN = "https://cran.rstudio.com/"),
@@ -17,7 +17,8 @@ shiny2docker(
   use_pak = FALSE,
   user = NULL,
   dependencies = NA,
-  sysreqs_platform = "ubuntu"
+  sysreqs_platform = "ubuntu",
+  folder_to_exclude = c("renv")
 )
 }
 \arguments{
@@ -55,6 +56,8 @@ non-working package, and/or the installation might fail.)
 }}
 
 \item{sysreqs_platform}{System requirements platform.\code{ubuntu} by default. If \code{NULL}, then the  current platform is used. Can be : "ubuntu-22.04" if needed to fit with the \code{FROM} Operating System. Only debian or ubuntu based images are supported}
+
+\item{folder_to_exclude}{Folder to exclude during scan to detect packages}
 }
 \value{
 An object of class \code{dockerfiler}, representing the generated Dockerfile. This object can be further manipulated using \code{dockerfiler} functions before being written to disk.

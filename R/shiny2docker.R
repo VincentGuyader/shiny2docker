@@ -24,6 +24,7 @@
 #'   - `FALSE`: do not install any dependencies. (You might end up with a
 #'     non-working package, and/or the installation might fail.)
 #' @param sysreqs_platform System requirements platform.`ubuntu` by default. If `NULL`, then the  current platform is used. Can be : "ubuntu-22.04" if needed to fit with the `FROM` Operating System. Only debian or ubuntu based images are supported
+#' @param folder_to_exclude Folder to exclude during scan to detect packages
 #'
 #' @return An object of class `dockerfiler`, representing the generated Dockerfile. This object can be further manipulated using `dockerfiler` functions before being written to disk.
 #'
@@ -50,7 +51,7 @@
 shiny2docker <- function(path = ".",
                          lockfile = file.path(path, "renv.lock"),
                          output = file.path(path, "Dockerfile"),
-                         FROM = "rocker/r-base",
+                         FROM = "rocker/geospatial",
                          AS = NULL,
                          sysreqs = TRUE,
                          repos = c(CRAN = "https://cran.rstudio.com/"),
@@ -59,9 +60,10 @@ shiny2docker <- function(path = ".",
                          use_pak = FALSE,
                          user = NULL,
                          dependencies = NA,
-                         sysreqs_platform = "ubuntu") {
+                         sysreqs_platform = "ubuntu",
+                         folder_to_exclude = c("renv")) {
   if (!file.exists(lockfile)) {
-    attachment::create_renv_for_prod(path = path, output = lockfile)
+    attachment::create_renv_for_prod(path = path, output = lockfile,folder_to_exclude = folder_to_exclude)
 
   }
   if (!file.exists(file.path(dirname(output), ".dockerignore"))) {
