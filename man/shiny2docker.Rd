@@ -8,7 +8,7 @@ shiny2docker(
   path = ".",
   lockfile = file.path(path, "renv.lock"),
   output = file.path(path, "Dockerfile"),
-  FROM = "rocker/r-base",
+  FROM = "rocker/geospatial",
   AS = NULL,
   sysreqs = TRUE,
   repos = c(CRAN = "https://cran.rstudio.com/"),
