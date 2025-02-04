@@ -14,7 +14,9 @@ Description:
 License: MIT + file LICENSE
 Imports: 
     attachment (>= 0.4.3),
-    dockerfiler
+    dockerfiler,
+    here,
+    yesno
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
@@ -25,6 +27,7 @@ Suggests:
     renv,
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown
+    rmarkdown,
+    rstudioapi
 Config/testthat/edition: 3
 VignetteBuilder: knitr

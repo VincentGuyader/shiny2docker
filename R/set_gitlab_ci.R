@@ -12,8 +12,17 @@
 #'
 #' @examples
 #' # Copy the .gitlab-ci.yml file to the current directory
-#' set_gitlab_ci()
-set_gitlab_ci <- function(path = '.') {
+#' set_gitlab_ci(path=tempdir())
+set_gitlab_ci <- function(path) {
+
+  if (missing(path)) {
+    if (yesno::yesno2("path is missing. Do you want to use the current directory?")) {
+      path <- here::here()
+    } else {
+      stop("Please supply a valid path.")
+    }
+  }
+
   file.copy(
     from = system.file("gitlab-ci.yml", package = "shiny2docker"),
     to = file.path(path, ".gitlab-ci.yml")

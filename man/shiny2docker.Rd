@@ -70,17 +70,26 @@ Automate the creation of a Dockerfile tailored for deploying Shiny applications.
 }
 \examples{
 \donttest{
-  # Generate Dockerfile in the current directory
-  shiny2docker(path = ".")
+  temp_dir <- tempfile("shiny2docker_example_")
+  dir.create(temp_dir)
+  example_app <- system.file("dummy_app", package = "shiny2docker")
+  file.copy(example_app, temp_dir, recursive = TRUE)
 
-  # Generate Dockerfile with a specific renv.lock and output path
-  shiny2docker(path = "path/to/shiny/app",
-              lockfile = "path/to/shiny/app/renv.lock",
-              output = "path/to/shiny/app/Dockerfile")
+  app_path <- file.path(temp_dir, "dummy_app")
+  if (requireNamespace("rstudioapi", quietly = TRUE) &&
+  rstudioapi::isAvailable()) {
+    rstudioapi::filesPaneNavigate(app_path)
+  }
+
+  docker_obj <- shiny2docker::shiny2docker(path = app_path)
+
+  print(list.files(app_path,all.files = TRUE,no.. = TRUE))
 
   # Further manipulate the Dockerfile object
-  docker_obj <- shiny2docker()
-  docker_obj$ENV("MY_ENV_VAR", "value")
-  docker_obj$write("Dockerfile")
+ docker_obj$add_after(
+   cmd = "ENV ENV \'MY_ENV_VAR\'=\'value\'",
+   after = 3
+ )
+ docker_obj$write(file.path(app_path, "Dockerfile"))
 }
 }

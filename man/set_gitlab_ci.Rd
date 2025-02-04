@@ -4,7 +4,7 @@
 \alias{set_gitlab_ci}
 \title{Configure GitLab CI pipeline for Docker builds}
 \usage{
-set_gitlab_ci(path = ".")
+set_gitlab_ci(path)
 }
 \arguments{
 \item{path}{A character string specifying the path to the directory where
@@ -20,5 +20,5 @@ is designed to build a Docker image and push the created image to the GitLab con
 }
 \examples{
 # Copy the .gitlab-ci.yml file to the current directory
-set_gitlab_ci()
+set_gitlab_ci(path=tempdir())
 }
