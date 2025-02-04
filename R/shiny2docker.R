@@ -34,7 +34,7 @@
 #' @importFrom dockerfiler dock_from_renv
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   # Generate Dockerfile in the current directory
 #'   shiny2docker(path = ".")
 #'

@@ -69,7 +69,7 @@ Generate a Dockerfile for a Shiny Application
 Automate the creation of a Dockerfile tailored for deploying Shiny applications. It manages R dependencies using \code{renv}, generates a \code{.dockerignore} file to optimize the Docker build process, and leverages the \code{dockerfiler} package to allow further customization of the Dockerfile object before writing it to disk.
 }
 \examples{
-\dontrun{
+\donttest{
   # Generate Dockerfile in the current directory
   shiny2docker(path = ".")
 

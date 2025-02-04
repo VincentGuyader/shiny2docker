@@ -1,5 +1,5 @@
 Package: shiny2docker
-Title: Generate Dockerfiles for Shiny Applications
+Title: Generate Dockerfiles for 'Shiny' Applications
 Version: 0.0.1
 Authors@R: 
     person("Vincent", "Guyader",
@@ -7,9 +7,9 @@ Authors@R:
            role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-0671-9270"))
 Description: 
-    shiny2docker automates the creation of Dockerfiles for deploying Shiny applications.
-    By integrating with `renv` for dependency management and leveraging Docker-based
-    solutions, shiny2docker simplifies the process of containerizing Shiny apps,
+    Automates the creation of Dockerfiles for deploying 'Shiny' applications.
+    By integrating with 'renv' for dependency management and leveraging Docker-based
+    solutions, it simplifies the process of containerizing 'Shiny' apps,
     ensuring reproducibility and consistency across different environments.
 License: MIT + file LICENSE
 Imports: 
@@ -23,5 +23,8 @@ BugReports: https://github.com/VincentGuyader/shiny2docker/issues
 Suggests: 
     shiny,
     renv,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
 Config/testthat/edition: 3
+VignetteBuilder: knitr
