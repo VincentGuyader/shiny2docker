@@ -6,7 +6,7 @@ stages:
 build_shiny_image:
   stage: build
   image:
-    name: gcr.io/kaniko-project/executor
+    name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   script:
     - mkdir -p /kaniko/.docker
