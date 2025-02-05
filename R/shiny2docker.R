@@ -32,21 +32,32 @@
 #'
 #' @importFrom attachment create_renv_for_prod
 #' @importFrom dockerfiler dock_from_renv
+#' @importFrom yesno yesno2
+#' @importFrom here here
 #'
 #' @examples
-#' \dontrun{
-#'   # Generate Dockerfile in the current directory
-#'   shiny2docker(path = ".")
+#' \donttest{
+#'   temp_dir <- tempfile("shiny2docker_example_")
+#'   dir.create(temp_dir)
+#'   example_app <- system.file("dummy_app", package = "shiny2docker")
+#'   file.copy(example_app, temp_dir, recursive = TRUE)
 #'
-#'   # Generate Dockerfile with a specific renv.lock and output path
-#'   shiny2docker(path = "path/to/shiny/app",
-#'               lockfile = "path/to/shiny/app/renv.lock",
-#'               output = "path/to/shiny/app/Dockerfile")
+#'   app_path <- file.path(temp_dir, "dummy_app")
+#'   if (requireNamespace("rstudioapi", quietly = TRUE) &&
+#'   rstudioapi::isAvailable()) {
+#'     rstudioapi::filesPaneNavigate(app_path)
+#'   }
+#'
+#'   docker_obj <- shiny2docker::shiny2docker(path = app_path)
+#'
+#'   print(list.files(app_path,all.files = TRUE,no.. = TRUE))
 #'
 #'   # Further manipulate the Dockerfile object
-#'   docker_obj <- shiny2docker()
-#'   docker_obj$ENV("MY_ENV_VAR", "value")
-#'   docker_obj$write("Dockerfile")
+#'  docker_obj$add_after(
+#'    cmd = "ENV ENV \'MY_ENV_VAR\'=\'value\'",
+#'    after = 3
+#'  )
+#'  docker_obj$write(file.path(app_path, "Dockerfile"))
 #' }
 shiny2docker <- function(path = ".",
                          lockfile = file.path(path, "renv.lock"),
@@ -62,8 +73,17 @@ shiny2docker <- function(path = ".",
                          dependencies = NA,
                          sysreqs_platform = "ubuntu",
                          folder_to_exclude = c("renv")) {
+
+  if (missing(path)) {
+    if (yesno::yesno2("path is missing. Do you want to use the current directory?")) {
+      path <- here::here()
+    } else {
+      stop("Please supply a valid path.")
+    }
+  }
+
   if (!file.exists(lockfile)) {
-    attachment::create_renv_for_prod(path = path, output = lockfile,folder_to_exclude = folder_to_exclude)
+    attachment::create_renv_for_prod(path = path, output = lockfile,folder_to_exclude = folder_to_exclude,document = TRUE)
 
   }
   if (!file.exists(file.path(dirname(output), ".dockerignore"))) {

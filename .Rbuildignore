@@ -6,3 +6,4 @@
 ^dev$
 ^README\.Rmd$
 ^\.github$
+^\.gitlab-ci\.yml$
