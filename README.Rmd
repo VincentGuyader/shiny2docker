@@ -37,16 +37,16 @@ knitr::opts_chunk$set(
 - **GitLab CI Integration**:  
   With the `set_gitlab_ci()` function, you can easily configure your GitLab CI pipeline. This function copies a pre-configured `gitlab-ci.yml` file from the package into your project directory. The provided CI configuration is designed to build your Docker image and push the created image to the GitLab container registry, thereby streamlining continuous integration and deployment workflows.
 
+- **GitHub Actions Integration**:  
+  With the `set_github_action()` function, you can quickly set up a GitHub Actions pipeline. This function copies a pre-configured `docker-build.yml` file from the package into the `.github/workflows/` directory of your project. The provided CI configuration is designed to build your Docker image and push the created image to the GitHub Container Registry, facilitating automated builds and deployments on GitHub.
+
 ## Installation
 
-
 You can install the production version from CRAN with :
-
 
 ```r
 install.packages("shiny2docker")
 ```
-
 
 You can install the development version of `shiny2docker` from [GitHub](https://github.com/VincentGuyader/shiny2docker) with:
 
@@ -89,6 +89,19 @@ library(shiny2docker)
 set_gitlab_ci()
 ```
 
+### Configure GitHub Actions for Docker Builds
+
+The new `set_github_action()` function allows you to quickly set up a GitHub Actions pipeline that will build your Docker image and push it to the GitHub Container Registry.
+
+```r
+library(shiny2docker)
+
+# Copy the docker-build.yml file to the .github/workflows/ directory
+set_github_action(path = ".")
+```
+
+Once the `docker-build.yml` file is in place, you can integrate it with GitHub Actions to automate the Docker image build and deployment process.
+
 ## Example Workflow
 
 1. **Prepare Your Shiny Application**:  
@@ -98,11 +111,13 @@ set_gitlab_ci()
    Run `shiny2docker()` to create the Dockerfile (and a `.dockerignore` file) in your project directory. This Dockerfile will include instructions to install system dependencies, R packages, and launch the Shiny app.
 
 3. **Set Up Continuous Integration (Optional)**:  
-   If you use GitLab, run `set_gitlab_ci()` to copy the pre-configured GitLab CI file into your project. This CI configuration will handle the Docker image build and deployment to GitLab's container registry.
+   - If you use GitLab, run `set_gitlab_ci()` to copy the pre-configured GitLab CI file into your project. This CI configuration will handle the Docker image build and deployment to GitLab's container registry.
+   - If you use GitHub, run `set_github_action(path = ".")` to copy the pre-configured GitHub Actions file into your project. This CI configuration will build your Docker image and push it to the GitHub Container Registry.
 
 4. **Deploy Your Application**:  
-   Use Docker to build and run your image, or integrate with GitLab CI/CD for automated deployments.
+   Use Docker to build and run your image, or integrate with your chosen CI/CD service for automated deployments.
 
 ## License
 
 This project is licensed under the terms of the MIT license.
+
