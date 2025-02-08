@@ -7,18 +7,20 @@
 set_gitlab_ci(path)
 }
 \arguments{
-\item{path}{A character string specifying the path to the directory where
-the \code{.gitlab-ci.yml} file will be copied. Defaults to the current directory ('.').}
+\item{path}{A character string specifying the directory where the
+\code{.gitlab-ci.yml} file will be copied. If missing, the user will be prompted to use
+the current directory.}
 }
 \value{
-A logical value indicating whether the file was successfully copied (\code{TRUE}) or not (\code{FALSE}).
+A logical value indicating whether the file was successfully copied (\code{TRUE})
+or not (\code{FALSE}).
 }
 \description{
-Set the \code{gitlab-ci.yml} file provided by the
-\code{shiny2docker} package to the specified directory. The GitLab CI configuration
-is designed to build a Docker image and push the created image to the GitLab container registry.
+Copies the \code{.gitlab-ci.yml} file provided by the \code{shiny2docker} package
+into the specified directory. The GitLab CI configuration is designed to build a Docker image
+and push the created image to the GitLab container registry.
 }
 \examples{
-# Copy the .gitlab-ci.yml file to the current directory
-set_gitlab_ci(path=tempdir())
+# Copy the .gitlab-ci.yml file to a temporary directory
+set_gitlab_ci(path = tempdir())
 }

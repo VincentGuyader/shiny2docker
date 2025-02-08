@@ -1,6 +1,6 @@
 Package: shiny2docker
 Title: Generate Dockerfiles for 'Shiny' Applications
-Version: 0.0.1.0001
+Version: 0.0.2
 Authors@R: 
     person("Vincent", "Guyader",
            email = "vincent@thinkr.fr",
@@ -11,9 +11,12 @@ Description:
     By integrating with 'renv' for dependency management and leveraging Docker-based
     solutions, it simplifies the process of containerizing 'Shiny' apps,
     ensuring reproducibility and consistency across different environments.
+    Additionally, it facilitates the setup of CI/CD pipelines for building Docker images
+    on both GitLab and GitHub.
 License: MIT + file LICENSE
 Imports: 
     attachment (>= 0.4.3),
+    cli,
     dockerfiler,
     here,
     yesno
