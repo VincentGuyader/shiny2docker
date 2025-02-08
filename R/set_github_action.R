@@ -18,19 +18,51 @@
 #' set_github_action(path = tempdir())
 set_github_action <- function(path) {
 
+  # Check if the 'path' parameter is provided
   if (missing(path)) {
-    if (yesno::yesno2("path is missing. Do you want to use the current directory?")) {
+    cli::cli_alert_info("No path provided.")
+    if (yesno::yesno2("The 'path' parameter is missing. Do you want to use the current directory?")) {
       path <- here::here()
+      cli::cli_alert_info("Using current directory: {path}")
     } else {
-      stop("Please supply a valid path.")
+      stop("Please provide a valid path.")
     }
   }
-  path <- file.path(path,".github/workflows/")
 
-  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-  file.copy(
-    from = system.file("docker-build.yml", package = "shiny2docker"),
-    to = file.path(path, "docker-build.yml")
+  # Define the destination folder (.github/workflows) inside the provided base directory
+  dest_path <- file.path(path, ".github", "workflows")
+  cli::cli_alert_info("Creating destination directory: {dest_path}")
+
+  # Create the destination directory if it doesn't exist
+  if (!dir.exists(dest_path)) {
+    dir.create(dest_path, recursive = TRUE, showWarnings = FALSE)
+    cli::cli_alert_success("Directory created: {dest_path}")
+  } else {
+    cli::cli_alert_info("Directory already exists: {dest_path}")
+  }
+
+  # Retrieve the source file from the shiny2docker package
+  source_file <- system.file("docker-build.yml", package = "shiny2docker")
+  if (source_file == "") {
+    cli::cli_alert_danger("The docker-build.yml file was not found in the shiny2docker package.")
+    stop("docker-build.yml file not found in the shiny2docker package.")
+  }
+  cli::cli_alert_info("Copying file from: {source_file}")
+
+  # Copy the docker-build.yml file to the destination directory
+  success <- file.copy(
+    from = source_file,
+    to = file.path(dest_path, "docker-build.yml"),
+    overwrite = TRUE
   )
+
+  if (isTRUE(success)) {
+    cli::cli_alert_success("File docker-build.yml copied successfully to {dest_path}")
+  } else {
+    cli::cli_alert_danger("Failed to copy docker-build.yml to {dest_path}")
+  }
+
+  return(success)
 }
+
 

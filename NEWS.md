@@ -1,3 +1,10 @@
+# shiny2docker 0.0.2
+
+## New functions
+
++ **`set_github_action`**  
+  Configure a Github Action pipeline for Docker builds.
+
 # shiny2docker 0.0.1
 
 * Initial CRAN submission.

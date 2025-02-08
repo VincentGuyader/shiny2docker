@@ -16,8 +16,9 @@ knitr::opts_chunk$set(
 # shiny2docker
 
 <!-- badges: start -->
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 [![R-CMD-check](https://github.com/VincentGuyader/shiny2docker/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/VincentGuyader/shiny2docker/actions/workflows/R-CMD-check.yaml)
+[![CRAN status](https://www.r-pkg.org/badges/version/shiny2docker)](https://CRAN.R-project.org/package=shiny2docker)
 <!-- badges: end -->
 
 `shiny2docker` is an R package designed to streamline the process of containerizing Shiny applications using Docker. By automating the generation of essential Docker files and managing R dependencies with `renv`, `shiny2docker` simplifies the deployment of Shiny apps, ensuring reproducibility and consistency across different environments.

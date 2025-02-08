@@ -60,28 +60,40 @@ The `shiny2docker()` function returns an object of class `dockerfiler`. This obj
 # Create the dockerfiler object
 docker_obj <- shiny2docker()
 
-# Add an environment variable
-docker_obj$ENV("MY_ENV_VAR", "my_value")
+# Add environment variables
+docker_obj$add_after(  cmd = "ENV ARROW_WITH_S3=1",  after = 1)
+docker_obj$add_after(  cmd = "ENV ARROW_S3=ON",after = 1)
+
 
 # Write the updated Dockerfile to disk
 docker_obj$write("Dockerfile")
 ```
 
-# Configuring GitLab CI for Docker Builds
+# Configuring CI/CD for Docker Builds
 
-The package also provides the `set_gitlab_ci()` function, which simplifies the process of configuring a GitLab CI pipeline. This pipeline is designed to build your Docker image and push it to the GitLab container registry.
+## GitLab CI for Docker Builds
+
+The package provides the `set_gitlab_ci()` function to simplify the process of configuring a GitLab CI pipeline. This pipeline is designed to build your Docker image and push it to the GitLab container registry.
 
 ```{r gitlab-ci, eval=FALSE}
-library(shiny2docker)
-
 # Copy the .gitlab-ci.yml file to the current directory
-set_gitlab_ci()
-
-# Or copy the file to a specific directory (e.g., your project folder)
-set_gitlab_ci("my_project")
+set_gitlab_ci(path = ".")
 ```
 
-Once the `.gitlab-ci.yml` file is in place, you can integrate with GitLab CI/CD to automate the Docker image build and deployment process.
+Once the `.gitlab-ci.yml` file is in place, you can integrate it with GitLab CI/CD to automate your Docker image build and deployment process.
+
+## GitHub Actions for Docker Builds
+
+The package also provides the `set_github_action()` function, which simplifies the process of configuring a GitHub Actions pipeline. This pipeline is designed to build your Docker image and push the created image to the GitHub Container Registry.
+
+```{r github-actions, eval=FALSE}
+# Copy the docker-build.yml file to the .github/workflows/ directory
+set_github_action(path = ".")
+```
+
+Once the `docker-build.yml` file is in place, you can integrate it with GitHub Actions to automate the Docker image build and deployment process, allowing you to continuously build and deploy your containerized Shiny applications.
+
+
 
 # Conclusion
 
