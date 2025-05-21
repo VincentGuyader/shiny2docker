@@ -1,6 +1,6 @@
 ---
 title: "Containerizing Shiny Applications with shiny2docker"
-author: "Your Name"
+author: "Vincent Guyader"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
