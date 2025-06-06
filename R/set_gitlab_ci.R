@@ -33,9 +33,7 @@ set_gitlab_ci <- function(path) {
   if (!dir.exists(path)) {
     dir.create(path, recursive = TRUE, showWarnings = FALSE)
     cli::cli_alert_success("Directory created: {path}")
-  } else {
-    cli::cli_alert_info("Directory already exists: {path}")
-  }
+  } 
 
   cli::cli_alert_info("Copying .gitlab-ci.yml file to: {path}")
 
