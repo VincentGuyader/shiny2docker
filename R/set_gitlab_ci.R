@@ -29,6 +29,16 @@ set_gitlab_ci <- function(path) {
     }
   }
 
+  # Create the destination directory if it doesn't exist
+  if (!dir.exists(path)) {
+    success <- dir.create(path, recursive = TRUE, showWarnings = FALSE)
+    if (!isTRUE(success)) {
+      cli::cli_alert_danger("Failed to create directory: {path}")
+      stop("Directory creation failed. Please check the path and permissions.")
+    }
+    cli::cli_alert_success("Directory created: {path}")
+  } 
+
   cli::cli_alert_info("Copying .gitlab-ci.yml file to: {path}")
 
   # Retrieve the source file from the shiny2docker package
