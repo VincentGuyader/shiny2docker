@@ -7,7 +7,7 @@
 #' @param path Character. Path to the folder containing the Shiny application (e.g., `app.R` or `ui.R` and `server.R`) along with any other necessary files.
 #' @param lockfile Character. Path to the `renv.lock` file that specifies the R package dependencies. If the `renv.lock` file does not exist, it will be created for production using the `attachment::create_renv_for_prod` function.
 #' @param output Character. Path to the generated Dockerfile. Defaults to `"Dockerfile"`.
-#' @param FROM Docker image to start FROM Default is FROM rocker/r-base
+#' @param FROM Docker image to start FROM. Default is rocker/geospatial
 #' @param AS The AS of the Dockerfile. Default it `NULL`.
 #' @param sysreqs boolean. If `TRUE`, the Dockerfile will contain sysreq installation.
 #' @param expand boolean. If `TRUE` each system requirement will have its own `RUN` line.
