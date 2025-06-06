@@ -10,8 +10,10 @@ set_gitlab_ci(path, tags = NULL)
 \item{path}{A character string specifying the directory where the
 \code{.gitlab-ci.yml} file will be copied. If missing, the user will be prompted to use
 the current directory.}
-\item{tags}{Optional character vector of GitLab runner tags. If provided, these
-tags will be added to the CI job to select the appropriate runner. Multiple tags are allowed.}
+
+\item{tags}{Optional character vector of GitLab runner tags. If provided, the
+function will add these tags to the generated CI job so the appropriate
+runner is selected. You can provide multiple tags.}
 }
 \value{
 A logical value indicating whether the file was successfully copied (\code{TRUE})
