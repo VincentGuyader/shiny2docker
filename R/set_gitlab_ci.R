@@ -5,8 +5,11 @@
 #' and push the created image to the GitLab container registry.
 #'
 #' @param path A character string specifying the directory where the
-#' `.gitlab-ci.yml` file will be copied. If missing, the user will be prompted to use
-#' the current directory.
+#'   `.gitlab-ci.yml` file will be copied. If missing, the user will be prompted to use
+#'   the current directory.
+#' @param tags Optional character vector of GitLab runner tags. If provided, the
+#'   function will add these tags to the generated CI job so the appropriate
+#'   runner is selected. You can provide multiple tags.
 #'
 #' @return A logical value indicating whether the file was successfully copied (`TRUE`)
 #' or not (`FALSE`).
@@ -16,7 +19,10 @@
 #' @examples
 #' # Copy the .gitlab-ci.yml file to a temporary directory
 #' set_gitlab_ci(path = tempdir())
-set_gitlab_ci <- function(path) {
+#'
+#' # Copy the file and specify runner tags
+#' set_gitlab_ci(path = tempdir(), tags = c("shiny_build", "prod"))
+set_gitlab_ci <- function(path, tags = NULL) {
 
   # Check if the 'path' parameter is provided
   if (missing(path)) {
@@ -37,7 +43,7 @@ set_gitlab_ci <- function(path) {
       stop("Directory creation failed. Please check the path and permissions.")
     }
     cli::cli_alert_success("Directory created: {path}")
-  } 
+  }
 
   cli::cli_alert_info("Copying .gitlab-ci.yml file to: {path}")
 
@@ -49,12 +55,30 @@ set_gitlab_ci <- function(path) {
   }
   cli::cli_alert_info("Found source file at: {source_file}")
 
+  # Path to destination file
+  dest_file <- file.path(path, ".gitlab-ci.yml")
+
   # Copy the gitlab-ci.yml file to the destination directory
   success <- file.copy(
     from = source_file,
-    to = file.path(path, ".gitlab-ci.yml"),
+    to = dest_file,
     overwrite = TRUE
   )
+
+  # If copy succeeded and tags supplied, add them to the job
+  if (isTRUE(success) && !is.null(tags)) {
+    cli::cli_alert_info("Adding runner tags to .gitlab-ci.yml: {paste(tags, collapse = ', ')}")
+    yaml_lines <- readLines(dest_file)
+    stage_line <- grep("^\\s*stage:", yaml_lines)[1]
+    if (length(stage_line) == 1 && !is.na(stage_line)) {
+      tag_lines <- c("  tags:", paste0("    - ", tags))
+      yaml_lines <- append(yaml_lines, tag_lines, after = stage_line)
+      writeLines(yaml_lines, dest_file)
+    } else {
+      cli::cli_alert_danger("Unable to locate stage line in .gitlab-ci.yml for tag insertion")
+      success <- FALSE
+    }
+  }
 
   if (isTRUE(success)) {
     cli::cli_alert_success(".gitlab-ci.yml file successfully copied to {path}")

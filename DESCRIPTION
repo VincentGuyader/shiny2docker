@@ -1,6 +1,6 @@
 Package: shiny2docker
 Title: Generate Dockerfiles for 'Shiny' Applications
-Version: 0.0.2
+Version: 0.0.2.9000
 Authors@R: 
     person("Vincent", "Guyader",
            email = "vincent@thinkr.fr",
