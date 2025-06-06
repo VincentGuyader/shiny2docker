@@ -43,7 +43,7 @@ set_gitlab_ci <- function(path, tags = NULL) {
       stop("Directory creation failed. Please check the path and permissions.")
     }
     cli::cli_alert_success("Directory created: {path}")
-  } 
+  }
 
   cli::cli_alert_info("Copying .gitlab-ci.yml file to: {path}")
 
