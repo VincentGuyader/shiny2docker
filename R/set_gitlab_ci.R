@@ -31,7 +31,11 @@ set_gitlab_ci <- function(path) {
 
   # Create the destination directory if it doesn't exist
   if (!dir.exists(path)) {
-    dir.create(path, recursive = TRUE, showWarnings = FALSE)
+    success <- dir.create(path, recursive = TRUE, showWarnings = FALSE)
+    if (!isTRUE(success)) {
+      cli::cli_alert_danger("Failed to create directory: {path}")
+      stop("Directory creation failed. Please check the path and permissions.")
+    }
     cli::cli_alert_success("Directory created: {path}")
   } 
 
