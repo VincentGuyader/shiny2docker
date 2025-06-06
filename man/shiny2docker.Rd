@@ -30,7 +30,7 @@ shiny2docker(
 
 \item{FROM}{Docker image to start FROM Default is FROM rocker/r-base}
 
-\item{AS}{The AS of the Dockerfile. Default it \code{NULL}.}
+\item{AS}{The AS of the Dockerfile. Default is \code{NULL}.}
 
 \item{sysreqs}{boolean. If \code{TRUE}, the Dockerfile will contain sysreq installation.}
 
