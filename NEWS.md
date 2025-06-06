@@ -3,7 +3,7 @@
 ## New functions
 
 + **`set_github_action`**  
-  Configure a Github Action pipeline for Docker builds.
+  Configure a GitHub Action pipeline for Docker builds.
 
 # shiny2docker 0.0.1
 
