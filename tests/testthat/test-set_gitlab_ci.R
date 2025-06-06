@@ -1,7 +1,7 @@
 library(testthat)
 
 # Create temp directory for testing
-tmp_dir <- tempdir(check = TRUE)
+tmp_dir <- tempfile()
 
 test_that("set_gitlab_ci inserts multiple tags", {
   set_gitlab_ci(path = tmp_dir, tags = c("shiny_build", "prod"))
