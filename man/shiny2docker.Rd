@@ -28,7 +28,7 @@ shiny2docker(
 
 \item{output}{Character. Path to the generated Dockerfile. Defaults to \code{"Dockerfile"}.}
 
-\item{FROM}{Docker image to start FROM Default is FROM rocker/r-base}
+\item{FROM}{Docker image to start FROM. Default is rocker/geospatial}
 
 \item{AS}{The AS of the Dockerfile. Default it \code{NULL}.}
 
