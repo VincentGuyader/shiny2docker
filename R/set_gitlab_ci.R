@@ -76,6 +76,7 @@ set_gitlab_ci <- function(path, tags = NULL) {
       writeLines(yaml_lines, dest_file)
     } else {
       cli::cli_alert_danger("Unable to locate stage line in .gitlab-ci.yml for tag insertion")
+      success <- FALSE
     }
   }
 
