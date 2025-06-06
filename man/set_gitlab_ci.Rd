@@ -4,12 +4,14 @@
 \alias{set_gitlab_ci}
 \title{Configure GitLab CI pipeline for Docker builds}
 \usage{
-set_gitlab_ci(path)
+set_gitlab_ci(path, tags = NULL)
 }
 \arguments{
 \item{path}{A character string specifying the directory where the
 \code{.gitlab-ci.yml} file will be copied. If missing, the user will be prompted to use
 the current directory.}
+\item{tags}{Optional character vector of GitLab runner tags. If provided, these
+tags will be added to the CI job to select the appropriate runner. Multiple tags are allowed.}
 }
 \value{
 A logical value indicating whether the file was successfully copied (\code{TRUE})
@@ -23,4 +25,7 @@ and push the created image to the GitLab container registry.
 \examples{
 # Copy the .gitlab-ci.yml file to a temporary directory
 set_gitlab_ci(path = tempdir())
+
+# Copy the file and specify runner tags
+set_gitlab_ci(path = tempdir(), tags = c("shiny_build", "prod"))
 }

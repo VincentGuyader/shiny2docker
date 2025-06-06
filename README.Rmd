@@ -87,6 +87,9 @@ library(shiny2docker)
 
 # Copy the .gitlab-ci.yml file to the current directory
 set_gitlab_ci()
+
+# Specify runner tags
+set_gitlab_ci(tags = c("shiny_build", "prod"))
 ```
 
 ### Configure GitHub Actions for Docker Builds

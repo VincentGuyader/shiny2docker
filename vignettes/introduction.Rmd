@@ -78,6 +78,9 @@ The package provides the `set_gitlab_ci()` function to simplify the process of c
 ```{r gitlab-ci, eval=FALSE}
 # Copy the .gitlab-ci.yml file to the current directory
 set_gitlab_ci(path = ".")
+
+# Specify runner tags
+set_gitlab_ci(path = ".", tags = c("shiny_build", "prod"))
 ```
 
 Once the `.gitlab-ci.yml` file is in place, you can integrate it with GitLab CI/CD to automate your Docker image build and deployment process.
