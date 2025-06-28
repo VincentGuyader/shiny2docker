@@ -1,5 +1,5 @@
 
-# shiny2docker dev version
+# shiny2docker 0.0.3
 
 * `set_gitlab_ci()` now accepts a `tags` parameter so you can specify one or
   more GitLab runner tags to use for the CI job.
