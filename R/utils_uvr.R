@@ -67,6 +67,116 @@ uvr_validate_sysreqs <- function(sysreqs) {
   invisible(TRUE)
 }
 
+#' Bootstrap a uvr project layout if files are missing
+#'
+#' Mirrors what `shiny2docker()` does for `renv` (auto-creating `renv.lock` via
+#' `attachment::create_renv_for_prod()`): if `uvr.toml`, `uvr.lock` or
+#' `.r-version` are absent, generate them so the user does not have to learn
+#' the uvr CLI before being able to call `shiny2docker_uvr()`.
+#'
+#' Strategy:
+#'   1. If `uvr.toml` is missing, generate a `renv.lock` via `attachment` (or
+#'      reuse an existing one), then `uvr import` it to produce `uvr.toml`.
+#'   2. If `.r-version` is missing, pin it to the current R version.
+#'   3. If `uvr.lock` is missing or older than `uvr.toml`, run `uvr lock`.
+#'
+#' Requires the `uvr` CLI on PATH; errors out with install instructions
+#' otherwise. All `uvr` invocations run with `path` as the working directory.
+#'
+#' @param path Project root.
+#' @param renv_lockfile Path to `renv.lock` to import from (created if missing).
+#' @param document Passed to `attachment::create_renv_for_prod()`.
+#' @param folder_to_exclude Passed to `attachment::create_renv_for_prod()`.
+#'
+#' @return Invisibly `TRUE`.
+#' @noRd
+uvr_bootstrap <- function(path,
+                          renv_lockfile     = file.path(path, "renv.lock"),
+                          document          = TRUE,
+                          folder_to_exclude = c("renv", ".uvr")) {
+
+  uvr_bin <- Sys.which("uvr")
+  if (!nzchar(uvr_bin)) {
+    stop(
+      "`uvr` CLI not found on PATH; needed to bootstrap a uvr project.\n",
+      "Install it once: ",
+      "curl -fsSL https://raw.githubusercontent.com/nbafrank/uvr/main/install.sh | sh\n",
+      "Or from R: install.packages(\"uvr\"); uvr::install_uvr()\n",
+      "If you've already bootstrapped the project elsewhere, ",
+      "make sure `uvr.toml`, `uvr.lock` and `.r-version` are at '", path, "/'.",
+      call. = FALSE
+    )
+  }
+
+  uvr_toml  <- file.path(path, "uvr.toml")
+  uvr_lock  <- file.path(path, "uvr.lock")
+  rver_file <- file.path(path, ".r-version")
+
+  run_uvr <- function(args, label) {
+    owd <- setwd(path); on.exit(setwd(owd), add = TRUE)
+    rc <- suppressWarnings(system2(uvr_bin, args, stdout = TRUE, stderr = TRUE))
+    setwd(owd); on.exit()
+    status <- attr(rc, "status")
+    if (!is.null(status) && status != 0L) {
+      stop(label, " failed (exit ", status, "):\n",
+           paste(rc, collapse = "\n"), call. = FALSE)
+    }
+    invisible(rc)
+  }
+
+  if (!file.exists(uvr_toml)) {
+    cli::cli_alert_info("uvr.toml not found at {.path {uvr_toml}} -- bootstrapping.")
+
+    if (!file.exists(renv_lockfile)) {
+      cli::cli_alert_info(
+        "Generating {.path renv.lock} via {.fn attachment::create_renv_for_prod} ..."
+      )
+      attachment::create_renv_for_prod(
+        path              = path,
+        output            = renv_lockfile,
+        folder_to_exclude = folder_to_exclude,
+        document          = document
+      )
+    }
+
+    cli::cli_alert_info("Running {.code uvr init} ...")
+    run_uvr(c("init", "--quiet", "."), "uvr init")
+
+    cli::cli_alert_info(
+      "Running {.code uvr import {basename(renv_lockfile)}} ..."
+    )
+    run_uvr(c("import", basename(renv_lockfile)), "uvr import")
+  }
+
+  if (!file.exists(rver_file)) {
+    # R.version$minor packs MINOR.PATCH (e.g. "4.3" for R 4.4.3), so a simple
+    # paste gives MAJOR.MINOR.PATCH directly.
+    current_r <- paste(R.version$major, R.version$minor, sep = ".")
+    cli::cli_alert_info(
+      "Pinning R to current local version: {.val {current_r}} ..."
+    )
+    tryCatch(
+      run_uvr(c("r", "pin", current_r), "uvr r pin"),
+      error = function(e) {
+        fallback <- "4.4.2"
+        cli::cli_alert_warning(paste0(
+          "Could not pin R ", current_r, " (", e$message,
+          "). Falling back to ", fallback, "."
+        ))
+        run_uvr(c("r", "pin", fallback), "uvr r pin (fallback)")
+      }
+    )
+  }
+
+  if (!file.exists(uvr_lock) ||
+      file.info(uvr_lock)$mtime < file.info(uvr_toml)$mtime) {
+    cli::cli_alert_info("Running {.code uvr lock} ...")
+    run_uvr(c("lock", "--quiet"), "uvr lock")
+  }
+
+  invisible(TRUE)
+}
+
 #' Assert that the project is uvr-ready
 #'
 #' Checks that `uvr.toml`, `uvr.lock` and a R version pin file all exist, and

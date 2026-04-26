@@ -228,6 +228,25 @@ test_that("frozen = TRUE generates `uvr sync --frozen`; FALSE warns and runs pla
   expect_match(contents_strict, "uvr sync --frozen")
 })
 
+test_that("bootstrap = FALSE errors immediately when uvr files are missing", {
+  tmp <- tempfile("uvr_no_bootstrap_"); dir.create(tmp)
+  writeLines("library(shiny)", file.path(tmp, "app.R"))
+  expect_error(
+    shiny2docker_uvr(path = tmp, bootstrap = FALSE, write = FALSE),
+    "uvr files missing"
+  )
+})
+
+test_that("bootstrap = TRUE without uvr CLI errors with install instructions", {
+  tmp <- tempfile("uvr_no_cli_"); dir.create(tmp)
+  writeLines("library(shiny)", file.path(tmp, "app.R"))
+  withr::local_envvar(PATH = "/nonexistent")
+  expect_error(
+    shiny2docker_uvr(path = tmp, bootstrap = TRUE, write = FALSE),
+    "uvr.*CLI not found"
+  )
+})
+
 test_that("shiny2docker_uvr creates the parent directory of `output` if missing", {
   tmp <- make_uvr_fixture()
   nested <- file.path(tmp, "deploy", "subdir", "Dockerfile")
