@@ -1,8 +1,8 @@
 #' Write a uvr-aware .dockerignore
 #'
 #' Adds the entries that are specific to a uvr-managed project (`.uvr/`,
-#' `.Rprofile` written by `uvr init`) on top of the defaults used by the
-#' `renv` backend.
+#' `.Rprofile` written by `uvr init`, leftover `renv/` artefacts) on top of
+#' the defaults used by the `renv` backend.
 #'
 #' @param path Path to the `.dockerignore` to write.
 #' @noRd
@@ -15,10 +15,56 @@ create_dockerignore_uvr <- function(path = ".dockerignore") {
     "manifest.json",
     "rsconnect/",
     ".uvr/",
+    ".Rprofile",
     "renv/",
     "renv.lock"
   )
   writeLines(entries, con = path)
+}
+
+#' Validate user-supplied host and port
+#'
+#' Both values are interpolated into shell commands inside the Dockerfile, so
+#' we reject anything that could break the build or inject extra tokens.
+#'
+#' @param host Character of length 1.
+#' @param port Numeric of length 1, integer in [1, 65535].
+#' @return Invisibly `TRUE` on success; raises an error otherwise.
+#' @noRd
+uvr_validate_host_port <- function(host, port) {
+  if (!is.character(host) || length(host) != 1L || is.na(host) ||
+      !grepl("^[A-Za-z0-9._-]+$", host)) {
+    stop("`host` must be a single non-NA character matching ",
+         "[A-Za-z0-9._-]+ (e.g. \"0.0.0.0\").", call. = FALSE)
+  }
+  if (!is.numeric(port) || length(port) != 1L || is.na(port) ||
+      port != as.integer(port) || port < 1L || port > 65535L) {
+    stop("`port` must be a single integer in [1, 65535].", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+#' Validate user-supplied extra system requirements
+#'
+#' Each entry is concatenated into an `apt-get install` command in the
+#' Dockerfile. We restrict to a conservative Debian package-name pattern to
+#' avoid shell injection.
+#'
+#' @param sysreqs `NULL` or a character vector.
+#' @return Invisibly `TRUE` on success; raises an error otherwise.
+#' @noRd
+uvr_validate_sysreqs <- function(sysreqs) {
+  if (is.null(sysreqs) || length(sysreqs) == 0L) return(invisible(TRUE))
+  if (!is.character(sysreqs) || any(is.na(sysreqs))) {
+    stop("`extra_sysreqs` must be a character vector with no NA.", call. = FALSE)
+  }
+  bad <- !grepl("^[A-Za-z0-9.+:-]+$", sysreqs)
+  if (any(bad)) {
+    stop("Invalid package name(s) in `extra_sysreqs`: ",
+         paste(shQuote(sysreqs[bad]), collapse = ", "),
+         ". Allowed characters: A-Z a-z 0-9 . + : -", call. = FALSE)
+  }
+  invisible(TRUE)
 }
 
 #' Assert that the project is uvr-ready
@@ -85,7 +131,7 @@ uvr_release_url <- function(uvr_version = "latest") {
   }
 
   tag <- if (startsWith(uvr_version, "v")) uvr_version else paste0("v", uvr_version)
-  if (!grepl("^v[0-9]+\\.[0-9]+\\.[0-9]+", tag)) {
+  if (!grepl("^v[0-9]+\\.[0-9]+\\.[0-9]+$", tag)) {
     stop(
       "uvr_version must be 'latest' or a semver tag like 'v0.3.1' / '0.3.1'. ",
       "Got: '", uvr_version, "'",
@@ -184,10 +230,17 @@ uvr_build_dockerfile <- function(base_image    = "debian:stable-slim",
   dock$COPY(from = ".", to = "/srv/shiny-server/")
 
   # `uvr run` takes a script, not arbitrary R args, so embed the launch as a
-  # tiny R file written into the image at build time.
+  # tiny R file written into the image at build time. host/port are validated
+  # by the public entry point; we still escape them defensively for the shell
+  # and the R source.
+  port_int   <- as.integer(port)
+  r_call     <- sprintf(
+    "shiny::runApp(appDir = '/srv/shiny-server', host = %s, port = %d)",
+    encodeString(host, quote = "\""), port_int
+  )
   dock$RUN(sprintf(
-    "printf '%%s\\n' \"shiny::runApp(appDir = '/srv/shiny-server', host = '%s', port = %s)\" > /srv/shiny-server/_uvr_start.R",
-    host, port
+    "printf '%%s\\n' %s > /srv/shiny-server/_uvr_start.R",
+    shQuote(r_call)
   ))
 
   dock$EXPOSE(port)

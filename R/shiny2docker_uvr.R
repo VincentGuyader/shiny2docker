@@ -3,10 +3,14 @@
 #' Generate a Dockerfile for a Shiny application using
 #' [uvr](https://github.com/nbafrank/uvr) instead of `renv`. The R version is
 #' installed inside the container by `uvr` (no `rocker/r-ver` base image
-#' required) and packages are restored from `uvr.lock` via `uvr sync --frozen`.
+#' required) and packages are restored from `uvr.lock` via `uvr sync`.
 #'
 #' Lifecycle: experimental. Requires the project to already be uvr-managed
 #' (`uvr.toml`, `uvr.lock`, and `.r-version` present at the project root).
+#'
+#' Platform constraints: the generated Dockerfile uses `apt-get` and Debian
+#' package names, and downloads the `x86_64-unknown-linux-gnu` uvr binary, so
+#' `base_image` must be a Debian/Ubuntu-derived image on amd64/glibc.
 #'
 #' @param path Character. Path to the folder containing the Shiny application.
 #' @param output Character. Path to the generated Dockerfile.
@@ -14,14 +18,19 @@
 #' @param uvr_lock Path to the `uvr.lock` lockfile. Defaults to `<path>/uvr.lock`.
 #' @param r_version_file Path to the R version pin. Defaults to `<path>/.r-version`.
 #' @param base_image Character. Docker base image. Defaults to `"debian:stable-slim"`.
+#'   Must be a Debian/Ubuntu-based amd64 image (see "Platform constraints" above).
 #' @param uvr_version Character. `"latest"` or a semver tag like `"v0.3.1"`.
 #'   Pinning a tag is recommended for reproducible builds.
-#' @param port Integer. Shiny port to expose. Default `3838`.
-#' @param host Character. Shiny host. Default `"0.0.0.0"`.
-#' @param extra_sysreqs Character vector of extra debian packages to install
-#'   before `uvr sync` (escape hatch for system dependencies that uvr does not
-#'   detect on its own).
-#' @param write Logical. Whether to write the Dockerfile to `output`. Default `TRUE`.
+#' @param port Integer in `[1, 65535]`. Shiny port to expose. Default `3838`.
+#' @param host Character. Shiny host. Default `"0.0.0.0"`. Single value, no
+#'   shell metacharacters; validated before being interpolated into the image.
+#' @param extra_sysreqs Character vector of extra debian package names to
+#'   install before `uvr sync` (escape hatch for system dependencies that uvr
+#'   does not detect on its own). Each entry must match
+#'   `[A-Za-z0-9.+:-]+` to avoid shell injection.
+#' @param write Logical. Whether to write the Dockerfile and `.dockerignore`
+#'   to disk. When `FALSE`, the function only returns the in-memory Dockerfile
+#'   object and does not touch the filesystem. Default `TRUE`.
 #'
 #' @return Invisibly, an R6 `dockerfiler::Dockerfile` object that can be further
 #'   customised before writing.
@@ -47,9 +56,8 @@ shiny2docker_uvr <- function(path           = ".",
     r_version_file = r_version_file
   )
 
-  if (!file.exists(file.path(dirname(output), ".dockerignore"))) {
-    create_dockerignore_uvr(path = file.path(dirname(output), ".dockerignore"))
-  }
+  uvr_validate_host_port(host = host, port = port)
+  uvr_validate_sysreqs(extra_sysreqs)
 
   dock <- uvr_build_dockerfile(
     base_image    = base_image,
@@ -60,6 +68,10 @@ shiny2docker_uvr <- function(path           = ".",
   )
 
   if (isTRUE(write)) {
+    dockerignore <- file.path(dirname(output), ".dockerignore")
+    if (!file.exists(dockerignore)) {
+      create_dockerignore_uvr(path = dockerignore)
+    }
     dock$write(output)
   }
 

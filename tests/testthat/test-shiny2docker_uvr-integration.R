@@ -22,27 +22,31 @@ skip_unless_docker_uvr_integration <- function() {
   }
 }
 
-free_port <- function() {
-  con <- socketConnection(host = "127.0.0.1", port = 0L,
-                          server = TRUE, blocking = FALSE)
-  on.exit(close(con))
-  port <- as.integer(socketSelect(list(con)) || TRUE)
-  # fallback: pick a high random port if the above doesn't expose it
-  sample(20000:39999, 1)
-}
-
-http_probe <- function(url, tries = 30L, delay = 2) {
-  for (i in seq_len(tries)) {
-    code <- tryCatch(
-      suppressWarnings({
-        con <- url(url, "rb")
-        on.exit(close(con), add = TRUE)
-        readLines(con, n = 1, warn = FALSE)
-        200L
-      }),
-      error = function(e) NA_integer_
+http_probe <- function(host, port, path = "/", tries = 30L, delay = 2) {
+  request <- sprintf(
+    "GET %s HTTP/1.0\r\nHost: %s:%d\r\nConnection: close\r\n\r\n",
+    path, host, port
+  )
+  one_attempt <- function() {
+    con <- NULL
+    on.exit(if (!is.null(con)) try(close(con), silent = TRUE), add = TRUE)
+    con <- tryCatch(
+      suppressWarnings(socketConnection(host = host, port = port,
+                                        blocking = TRUE, open = "r+",
+                                        timeout = 5)),
+      error = function(e) NULL
     )
-    if (isTRUE(code == 200L)) return(200L)
+    if (is.null(con)) return(NA_integer_)
+    tryCatch({
+      writeLines(request, con, sep = "")
+      first <- readLines(con, n = 1, warn = FALSE)
+      m <- regmatches(first, regexec("^HTTP/[0-9.]+ ([0-9]{3})", first))[[1]]
+      if (length(m) >= 2) as.integer(m[2]) else NA_integer_
+    }, error = function(e) NA_integer_)
+  }
+  for (i in seq_len(tries)) {
+    status <- one_attempt()
+    if (isTRUE(status == 200L)) return(200L)
     Sys.sleep(delay)
   }
   NA_integer_
@@ -106,6 +110,7 @@ test_that("shiny2docker_uvr produces an image that serves a shiny app over HTTP"
   expect_true(is.null(attr(run_rc, "status")) || attr(run_rc, "status") == 0,
               info = paste("docker run failed:", paste(run_rc, collapse = "\n")))
 
-  status <- http_probe(sprintf("http://127.0.0.1:%d/", port), tries = 30L, delay = 2)
+  status <- http_probe(host = "127.0.0.1", port = port, path = "/",
+                       tries = 30L, delay = 2)
   expect_identical(status, 200L)
 })

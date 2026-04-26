@@ -37,8 +37,55 @@ test_that("uvr_release_url accepts pinned tags with or without leading v", {
 })
 
 test_that("uvr_release_url rejects garbage versions", {
-  expect_error(uvr_release_url("nope"), "semver")
-  expect_error(uvr_release_url("1.2"),  "semver")
+  expect_error(uvr_release_url("nope"),       "semver")
+  expect_error(uvr_release_url("1.2"),        "semver")
+  expect_error(uvr_release_url("v0.3.1junk"), "semver")
+  expect_error(uvr_release_url("0.3.1-beta"), "semver")
+})
+
+test_that("uvr_validate_host_port rejects shell-unsafe values", {
+  expect_silent(uvr_validate_host_port("0.0.0.0", 3838))
+  expect_silent(uvr_validate_host_port("my-host_1.local", 80))
+  expect_error(uvr_validate_host_port("0.0.0.0; rm -rf /", 3838), "host")
+  expect_error(uvr_validate_host_port("0.0.0.0", 0),        "port")
+  expect_error(uvr_validate_host_port("0.0.0.0", 99999),    "port")
+  expect_error(uvr_validate_host_port("0.0.0.0", "3838"),   "port")
+  expect_error(uvr_validate_host_port(NA, 3838),            "host")
+  expect_error(uvr_validate_host_port(c("a","b"), 3838),    "host")
+})
+
+test_that("uvr_validate_sysreqs rejects shell-unsafe entries", {
+  expect_silent(uvr_validate_sysreqs(NULL))
+  expect_silent(uvr_validate_sysreqs(character()))
+  expect_silent(uvr_validate_sysreqs(c("libpq-dev", "libsqlite3-dev")))
+  expect_error(uvr_validate_sysreqs(c("libpq-dev", "evil; rm -rf /")), "Invalid")
+  expect_error(uvr_validate_sysreqs(c("libpq-dev", NA)),               "NA")
+})
+
+test_that("shiny2docker_uvr propagates validation errors", {
+  tmp <- make_uvr_fixture()
+  expect_error(
+    shiny2docker_uvr(path = tmp, host = "0.0.0.0; whoami", write = FALSE),
+    "host"
+  )
+  expect_error(
+    shiny2docker_uvr(path = tmp, port = 70000, write = FALSE),
+    "port"
+  )
+  expect_error(
+    shiny2docker_uvr(path = tmp,
+                     extra_sysreqs = c("libpq-dev", "evil;cmd"),
+                     write = FALSE),
+    "Invalid"
+  )
+})
+
+test_that("shiny2docker_uvr does not write a .dockerignore when write = FALSE", {
+  tmp <- make_uvr_fixture()
+  out_file <- file.path(tmp, "Dockerfile")
+  shiny2docker_uvr(path = tmp, output = out_file, write = FALSE)
+  expect_false(file.exists(out_file))
+  expect_false(file.exists(file.path(tmp, ".dockerignore")))
 })
 
 test_that("uvr_assert_state errors when files are missing", {

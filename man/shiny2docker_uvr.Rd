@@ -29,20 +29,25 @@ shiny2docker_uvr(
 
 \item{r_version_file}{Path to the R version pin. Defaults to \verb{<path>/.r-version}.}
 
-\item{base_image}{Character. Docker base image. Defaults to \code{"debian:stable-slim"}.}
+\item{base_image}{Character. Docker base image. Defaults to \code{"debian:stable-slim"}.
+Must be a Debian/Ubuntu-based amd64 image (see "Platform constraints" above).}
 
 \item{uvr_version}{Character. \code{"latest"} or a semver tag like \code{"v0.3.1"}.
 Pinning a tag is recommended for reproducible builds.}
 
-\item{port}{Integer. Shiny port to expose. Default \code{3838}.}
+\item{port}{Integer in \verb{[1, 65535]}. Shiny port to expose. Default \code{3838}.}
 
-\item{host}{Character. Shiny host. Default \code{"0.0.0.0"}.}
+\item{host}{Character. Shiny host. Default \code{"0.0.0.0"}. Single value, no
+shell metacharacters; validated before being interpolated into the image.}
 
-\item{extra_sysreqs}{Character vector of extra debian packages to install
-before \verb{uvr sync} (escape hatch for system dependencies that uvr does not
-detect on its own).}
+\item{extra_sysreqs}{Character vector of extra debian package names to
+install before \verb{uvr sync} (escape hatch for system dependencies that uvr
+does not detect on its own). Each entry must match
+\verb{[A-Za-z0-9.+:-]+} to avoid shell injection.}
 
-\item{write}{Logical. Whether to write the Dockerfile to \code{output}. Default \code{TRUE}.}
+\item{write}{Logical. Whether to write the Dockerfile and \code{.dockerignore}
+to disk. When \code{FALSE}, the function only returns the in-memory Dockerfile
+object and does not touch the filesystem. Default \code{TRUE}.}
 }
 \value{
 Invisibly, an R6 \code{dockerfiler::Dockerfile} object that can be further
@@ -52,9 +57,13 @@ customised before writing.
 Generate a Dockerfile for a Shiny application using
 \href{https://github.com/nbafrank/uvr}{uvr} instead of \code{renv}. The R version is
 installed inside the container by \code{uvr} (no \code{rocker/r-ver} base image
-required) and packages are restored from \code{uvr.lock} via \verb{uvr sync --frozen}.
+required) and packages are restored from \code{uvr.lock} via \verb{uvr sync}.
 }
 \details{
 Lifecycle: experimental. Requires the project to already be uvr-managed
 (\code{uvr.toml}, \code{uvr.lock}, and \code{.r-version} present at the project root).
+
+Platform constraints: the generated Dockerfile uses \code{apt-get} and Debian
+package names, and downloads the \code{x86_64-unknown-linux-gnu} uvr binary, so
+\code{base_image} must be a Debian/Ubuntu-derived image on amd64/glibc.
 }
