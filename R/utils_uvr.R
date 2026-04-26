@@ -97,7 +97,7 @@ uvr_assert_state <- function(uvr_toml, uvr_lock, r_version_file) {
   }
   if (file.info(uvr_lock)$mtime < file.info(uvr_toml)$mtime) {
     stop(
-      "uvr.lock is older than uvr.toml — manifest changed since last lock.\n",
+      "uvr.lock is older than uvr.toml -- manifest changed since last lock.\n",
       "Run `uvr lock` to refresh it.",
       call. = FALSE
     )
