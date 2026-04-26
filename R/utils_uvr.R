@@ -109,6 +109,17 @@ uvr_assert_state <- function(uvr_toml, uvr_lock, r_version_file) {
       call. = FALSE
     )
   }
+  r_lines <- readLines(r_version_file, warn = FALSE)
+  r_lines <- r_lines[nzchar(trimws(r_lines))]
+  if (length(r_lines) != 1L ||
+      !grepl("^[0-9]+\\.[0-9]+\\.[0-9]+$", trimws(r_lines))) {
+    stop(
+      ".r-version at '", r_version_file, "' must contain a single line ",
+      "with a MAJOR.MINOR.PATCH version (e.g. \"4.4.2\"). Got: ",
+      paste(shQuote(r_lines), collapse = ", "),
+      call. = FALSE
+    )
+  }
 
   invisible(TRUE)
 }
@@ -159,7 +170,8 @@ uvr_build_dockerfile <- function(base_image    = "debian:stable-slim",
                                  uvr_version   = "latest",
                                  port          = 3838,
                                  host          = "0.0.0.0",
-                                 extra_sysreqs = NULL) {
+                                 extra_sysreqs = NULL,
+                                 frozen        = FALSE) {
 
   release <- uvr_release_url(uvr_version)
 
@@ -221,11 +233,12 @@ uvr_build_dockerfile <- function(base_image    = "debian:stable-slim",
     ))
   }
 
-  # Note: ideally `uvr sync --frozen` for CI strictness, but as of uvr 0.2.15
-  # the frozen check rejects locks generated on a different host than the
-  # container's target OS (e.g. host-side P3M URL vs CRAN source URL). Track
-  # upstream and switch back to --frozen once that's resolved.
-  dock$RUN("apt-get update && uvr sync && rm -rf /var/lib/apt/lists/*")
+  # `--frozen` is what we want in CI (lock = source of truth), but uvr 0.2.15
+  # rejects locks generated on a different host than the container's target OS
+  # (e.g. host-side P3M URL vs CRAN source URL inside the container). Default
+  # is FALSE to keep the build green; opt in once your environment supports it.
+  sync_cmd <- if (isTRUE(frozen)) "uvr sync --frozen" else "uvr sync"
+  dock$RUN(paste("apt-get update &&", sync_cmd, "&& rm -rf /var/lib/apt/lists/*"))
 
   dock$COPY(from = ".", to = "/srv/shiny-server/")
 

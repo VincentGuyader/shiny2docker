@@ -28,9 +28,16 @@
 #'   install before `uvr sync` (escape hatch for system dependencies that uvr
 #'   does not detect on its own). Each entry must match
 #'   `[A-Za-z0-9.+:-]+` to avoid shell injection.
+#' @param frozen Logical. If `TRUE`, the generated Dockerfile runs
+#'   `uvr sync --frozen` so the build fails when `uvr.lock` is out of date
+#'   relative to `uvr.toml`. Default `FALSE` because uvr 0.2.15 rejects
+#'   locks generated on a different host than the container's target OS;
+#'   opt in once your setup supports it. When `FALSE`, an `cli` warning is
+#'   emitted to make the relaxed strictness explicit.
 #' @param write Logical. Whether to write the Dockerfile and `.dockerignore`
 #'   to disk. When `FALSE`, the function only returns the in-memory Dockerfile
-#'   object and does not touch the filesystem. Default `TRUE`.
+#'   object and does not touch the filesystem. Default `TRUE`. The parent
+#'   directory of `output` is created if it does not already exist.
 #'
 #' @return Invisibly, an R6 `dockerfiler::Dockerfile` object that can be further
 #'   customised before writing.
@@ -48,6 +55,7 @@ shiny2docker_uvr <- function(path           = ".",
                              port           = 3838,
                              host           = "0.0.0.0",
                              extra_sysreqs  = NULL,
+                             frozen         = FALSE,
                              write          = TRUE) {
 
   uvr_assert_state(
@@ -59,16 +67,29 @@ shiny2docker_uvr <- function(path           = ".",
   uvr_validate_host_port(host = host, port = port)
   uvr_validate_sysreqs(extra_sysreqs)
 
+  if (!isTRUE(frozen)) {
+    cli::cli_alert_warning(paste(
+      "frozen = FALSE: the generated build runs `uvr sync` (no --frozen),",
+      "so a stale uvr.lock will not block the image. Set frozen = TRUE",
+      "once your environment supports it."
+    ))
+  }
+
   dock <- uvr_build_dockerfile(
     base_image    = base_image,
     uvr_version   = uvr_version,
     port          = port,
     host          = host,
-    extra_sysreqs = extra_sysreqs
+    extra_sysreqs = extra_sysreqs,
+    frozen        = frozen
   )
 
   if (isTRUE(write)) {
-    dockerignore <- file.path(dirname(output), ".dockerignore")
+    out_dir <- dirname(output)
+    if (!dir.exists(out_dir)) {
+      dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+    }
+    dockerignore <- file.path(out_dir, ".dockerignore")
     if (!file.exists(dockerignore)) {
       create_dockerignore_uvr(path = dockerignore)
     }

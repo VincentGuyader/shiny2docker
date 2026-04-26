@@ -15,6 +15,7 @@ shiny2docker_uvr(
   port = 3838,
   host = "0.0.0.0",
   extra_sysreqs = NULL,
+  frozen = FALSE,
   write = TRUE
 )
 }
@@ -45,9 +46,17 @@ install before \verb{uvr sync} (escape hatch for system dependencies that uvr
 does not detect on its own). Each entry must match
 \verb{[A-Za-z0-9.+:-]+} to avoid shell injection.}
 
+\item{frozen}{Logical. If \code{TRUE}, the generated Dockerfile runs
+\verb{uvr sync --frozen} so the build fails when \code{uvr.lock} is out of date
+relative to \code{uvr.toml}. Default \code{FALSE} because uvr 0.2.15 rejects
+locks generated on a different host than the container's target OS;
+opt in once your setup supports it. When \code{FALSE}, an \code{cli} warning is
+emitted to make the relaxed strictness explicit.}
+
 \item{write}{Logical. Whether to write the Dockerfile and \code{.dockerignore}
 to disk. When \code{FALSE}, the function only returns the in-memory Dockerfile
-object and does not touch the filesystem. Default \code{TRUE}.}
+object and does not touch the filesystem. Default \code{TRUE}. The parent
+directory of \code{output} is created if it does not already exist.}
 }
 \value{
 Invisibly, an R6 \code{dockerfiler::Dockerfile} object that can be further
