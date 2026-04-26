@@ -28,7 +28,7 @@ create_dockerignore_uvr <- function(path = ".dockerignore") {
 #' we reject anything that could break the build or inject extra tokens.
 #'
 #' @param host Character of length 1.
-#' @param port Numeric of length 1, integer in [1, 65535].
+#' @param port Numeric of length 1, integer in `[1, 65535]`.
 #' @return Invisibly `TRUE` on success; raises an error otherwise.
 #' @noRd
 uvr_validate_host_port <- function(host, port) {
