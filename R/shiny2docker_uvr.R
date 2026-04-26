@@ -5,18 +5,24 @@
 #' installed inside the container by `uvr` (no `rocker/r-ver` base image
 #' required) and packages are restored from `uvr.lock` via `uvr sync`.
 #'
-#' Lifecycle: experimental. Requires the project to already be uvr-managed
-#' (`uvr.toml`, `uvr.lock`, and `.r-version` present at the project root).
+#' Lifecycle: experimental. Requires the project to already be uvr-managed —
+#' `uvr.toml`, `uvr.lock`, and `.r-version` must live at the root of `path`,
+#' under those exact filenames (the generated Dockerfile copies them by name
+#' from the build context, matching uvr's own convention).
+#'
+#' What `uvr_assert_state()` checks before generation: those three files exist,
+#' `uvr.lock` is at least as recent as `uvr.toml` (mtime check), and
+#' `.r-version` contains a single `MAJOR.MINOR.PATCH` line. It does **not**
+#' parse `uvr.toml` to cross-validate the pinned R version against any
+#' `[r] version` constraint — uvr itself owns that consistency contract.
 #'
 #' Platform constraints: the generated Dockerfile uses `apt-get` and Debian
 #' package names, and downloads the `x86_64-unknown-linux-gnu` uvr binary, so
 #' `base_image` must be a Debian/Ubuntu-derived image on amd64/glibc.
 #'
-#' @param path Character. Path to the folder containing the Shiny application.
+#' @param path Character. Path to the folder containing the Shiny application
+#'   *and* the uvr files (`uvr.toml`, `uvr.lock`, `.r-version`).
 #' @param output Character. Path to the generated Dockerfile.
-#' @param uvr_toml Path to the `uvr.toml` manifest. Defaults to `<path>/uvr.toml`.
-#' @param uvr_lock Path to the `uvr.lock` lockfile. Defaults to `<path>/uvr.lock`.
-#' @param r_version_file Path to the R version pin. Defaults to `<path>/.r-version`.
 #' @param base_image Character. Docker base image. Defaults to `"debian:stable-slim"`.
 #'   Must be a Debian/Ubuntu-based amd64 image (see "Platform constraints" above).
 #' @param uvr_version Character. `"latest"` or a semver tag like `"v0.3.1"`.
@@ -45,23 +51,20 @@
 #' @export
 #'
 #' @importFrom dockerfiler Dockerfile
-shiny2docker_uvr <- function(path           = ".",
-                             output         = file.path(path, "Dockerfile"),
-                             uvr_toml       = file.path(path, "uvr.toml"),
-                             uvr_lock       = file.path(path, "uvr.lock"),
-                             r_version_file = file.path(path, ".r-version"),
-                             base_image     = "debian:stable-slim",
-                             uvr_version    = "latest",
-                             port           = 3838,
-                             host           = "0.0.0.0",
-                             extra_sysreqs  = NULL,
-                             frozen         = FALSE,
-                             write          = TRUE) {
+shiny2docker_uvr <- function(path          = ".",
+                             output        = file.path(path, "Dockerfile"),
+                             base_image    = "debian:stable-slim",
+                             uvr_version   = "latest",
+                             port          = 3838,
+                             host          = "0.0.0.0",
+                             extra_sysreqs = NULL,
+                             frozen        = FALSE,
+                             write         = TRUE) {
 
   uvr_assert_state(
-    uvr_toml       = uvr_toml,
-    uvr_lock       = uvr_lock,
-    r_version_file = r_version_file
+    uvr_toml       = file.path(path, "uvr.toml"),
+    uvr_lock       = file.path(path, "uvr.lock"),
+    r_version_file = file.path(path, ".r-version")
   )
 
   uvr_validate_host_port(host = host, port = port)

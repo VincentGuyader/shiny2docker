@@ -7,9 +7,6 @@
 shiny2docker_uvr(
   path = ".",
   output = file.path(path, "Dockerfile"),
-  uvr_toml = file.path(path, "uvr.toml"),
-  uvr_lock = file.path(path, "uvr.lock"),
-  r_version_file = file.path(path, ".r-version"),
   base_image = "debian:stable-slim",
   uvr_version = "latest",
   port = 3838,
@@ -20,15 +17,10 @@ shiny2docker_uvr(
 )
 }
 \arguments{
-\item{path}{Character. Path to the folder containing the Shiny application.}
+\item{path}{Character. Path to the folder containing the Shiny application
+\emph{and} the uvr files (\code{uvr.toml}, \code{uvr.lock}, \code{.r-version}).}
 
 \item{output}{Character. Path to the generated Dockerfile.}
-
-\item{uvr_toml}{Path to the \code{uvr.toml} manifest. Defaults to \verb{<path>/uvr.toml}.}
-
-\item{uvr_lock}{Path to the \code{uvr.lock} lockfile. Defaults to \verb{<path>/uvr.lock}.}
-
-\item{r_version_file}{Path to the R version pin. Defaults to \verb{<path>/.r-version}.}
 
 \item{base_image}{Character. Docker base image. Defaults to \code{"debian:stable-slim"}.
 Must be a Debian/Ubuntu-based amd64 image (see "Platform constraints" above).}
@@ -69,8 +61,16 @@ installed inside the container by \code{uvr} (no \code{rocker/r-ver} base image
 required) and packages are restored from \code{uvr.lock} via \verb{uvr sync}.
 }
 \details{
-Lifecycle: experimental. Requires the project to already be uvr-managed
-(\code{uvr.toml}, \code{uvr.lock}, and \code{.r-version} present at the project root).
+Lifecycle: experimental. Requires the project to already be uvr-managed —
+\code{uvr.toml}, \code{uvr.lock}, and \code{.r-version} must live at the root of \code{path},
+under those exact filenames (the generated Dockerfile copies them by name
+from the build context, matching uvr's own convention).
+
+What \code{uvr_assert_state()} checks before generation: those three files exist,
+\code{uvr.lock} is at least as recent as \code{uvr.toml} (mtime check), and
+\code{.r-version} contains a single \code{MAJOR.MINOR.PATCH} line. It does \strong{not}
+parse \code{uvr.toml} to cross-validate the pinned R version against any
+\verb{[r] version} constraint — uvr itself owns that consistency contract.
 
 Platform constraints: the generated Dockerfile uses \code{apt-get} and Debian
 package names, and downloads the \code{x86_64-unknown-linux-gnu} uvr binary, so
