@@ -217,7 +217,7 @@ test_that("frozen = TRUE generates `uvr sync --frozen`; FALSE warns and runs pla
     "frozen = FALSE"
   )
   contents_loose <- paste(readLines(out_file), collapse = "\n")
-  expect_match(contents_loose, "uvr sync &&")
+  expect_match(contents_loose, "(?m)^RUN uvr sync$", perl = TRUE)
   expect_false(grepl("uvr sync --frozen", contents_loose))
 
   # frozen = TRUE produces `uvr sync --frozen` and emits no warning

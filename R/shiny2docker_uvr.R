@@ -55,7 +55,7 @@
 #'   `uvr sync --frozen` so the build fails when `uvr.lock` is out of date
 #'   relative to `uvr.toml`. Default `FALSE` because uvr 0.2.15 rejects
 #'   locks generated on a different host than the container's target OS;
-#'   opt in once your setup supports it. When `FALSE`, an `cli` warning is
+#'   opt in once your setup supports it. When `FALSE`, a `cli` warning is
 #'   emitted to make the relaxed strictness explicit.
 #' @param write Logical. Whether to write the Dockerfile and `.dockerignore`
 #'   to disk. When `FALSE`, the function only returns the in-memory Dockerfile

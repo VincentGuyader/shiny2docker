@@ -517,7 +517,7 @@ uvr_build_dockerfile <- function(base_image    = "debian:stable-slim",
   # (e.g. host-side P3M URL vs CRAN source URL inside the container). Default
   # is FALSE to keep the build green; opt in once your environment supports it.
   sync_cmd <- if (isTRUE(frozen)) "uvr sync --frozen" else "uvr sync"
-  dock$RUN(paste("apt-get update &&", sync_cmd, "&& rm -rf /var/lib/apt/lists/*"))
+  dock$RUN(sync_cmd)
 
   dock$COPY(from = ".", to = "/srv/shiny-server/")
 
