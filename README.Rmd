@@ -105,6 +105,125 @@ set_github_action(path = ".")
 
 Once the `docker-build.yml` file is in place, you can integrate it with GitHub Actions to automate the Docker image build and deployment process.
 
+## Experimental: uvr backend (`shiny2docker_uvr()`)
+
+`shiny2docker_uvr()` is a sister function that generates a Dockerfile using
+[**uvr**](https://github.com/nbafrank/uvr) — a Rust-based, uv-style R project
+manager — instead of `renv`. With this backend:
+
+- The R version is installed **inside the container** by `uvr`
+  (no `rocker/r-ver` base image required); pick any Debian/Ubuntu-derived
+  amd64 image you want.
+- Packages are restored from `uvr.lock` via `uvr sync` at build time.
+- Manifest, lockfile and R version live in three small files at the project
+  root: `uvr.toml`, `uvr.lock`, `.r-version`.
+
+> **Lifecycle: experimental.** It works end-to-end on Linux, but on Debian
+> targets `uvr` 0.2.15 currently falls back to source compilation for some
+> packages (P3M binary detection still maturing), so cold builds can be slow.
+> See the [uvr README](https://github.com/nbafrank/uvr) for the upstream
+> roadmap.
+
+### Install the `uvr` CLI from R
+
+You don't have to leave R to install the binary — `install_uvr()` downloads
+the right release for your platform and drops the executable in a sensible
+place:
+
+```r
+shiny2docker::install_uvr()
+# Linux/macOS default:  ~/.local/bin/uvr
+# Windows default:      %LOCALAPPDATA%\shiny2docker\bin\uvr.exe
+```
+
+If `~/.local/bin` (or the Windows equivalent) isn't on your `PATH` yet,
+`install_uvr()` prints a one-line `export`/`setx` hint to make it
+permanent.
+
+You can also pin a specific release or a custom destination:
+
+```r
+shiny2docker::install_uvr(version = "v0.2.15", dest = "/usr/local/bin")
+```
+
+### Generate the Dockerfile
+
+```r
+library(shiny2docker)
+
+# In a directory containing your shiny app:
+shiny2docker_uvr()
+```
+
+If `uvr.toml` / `uvr.lock` / `.r-version` are missing, the function bootstraps
+them automatically (same UX as `shiny2docker()` does for `renv.lock`):
+
+1. generate `renv.lock` via `attachment::create_renv_for_prod()` if missing,
+2. run `uvr init` + `uvr import` to produce `uvr.toml`,
+3. pin `.r-version` to the local R version,
+4. run `uvr lock` to produce `uvr.lock`.
+
+Set `bootstrap = FALSE` if you want it to fail fast instead — useful in CI
+where you expect those three files to already exist.
+
+If the `uvr` CLI isn't installed when bootstrapping is needed and the
+session is interactive, you'll be prompted to install it on the spot.
+
+### The `frozen` argument
+
+Reproducibility detail worth understanding before deploying:
+
+- `uvr.toml` is the **manifest** ("I want shiny, dplyr, …").
+- `uvr.lock` is the **lockfile** ("here are the exact versions: shiny 1.10.0,
+  dplyr 1.1.4, …"). It's the one to commit and trust as source of truth.
+
+Inside the generated Dockerfile, the package install step is either:
+
+- `uvr sync --frozen` — strict CI mode. **If `uvr.lock` is out of date
+  relative to `uvr.toml`, the build fails.** This is what you want long-term:
+  the image installs *exactly* what's in your committed lockfile, no surprise.
+- `uvr sync` — lenient mode. If `uvr.lock` looks stale, uvr re-resolves on
+  the fly. Build still succeeds, but the image may contain package versions
+  that aren't pinned in your committed lock — you've quietly lost
+  reproducibility.
+
+`shiny2docker_uvr()` defaults to `frozen = FALSE` (lenient) and emits a
+`cli` warning to make this explicit. Why not strict by default? Because
+`uvr` 0.2.15 has a known false-positive: a lockfile generated on host OS A
+gets rejected as "stale" by `uvr sync --frozen` running inside a container
+based on host OS B (Ubuntu host → Debian image is the typical case). So
+flipping `--frozen` on by default would break builds for the wrong reason.
+
+Switch to `frozen = TRUE` once any of these is true:
+
+- upstream uvr fixes the cross-host false positive (track
+  [nbafrank/uvr](https://github.com/nbafrank/uvr));
+- your dev host runs the same distribution as your container (e.g. Debian
+  dev → Debian image);
+- you're confident the lock will always be regenerated on the same OS as
+  the Docker target.
+
+```r
+# Once your environment supports it:
+shiny2docker_uvr(frozen = TRUE)
+```
+
+### Other useful arguments
+
+```r
+shiny2docker_uvr(
+  path          = ".",
+  base_image    = "debian:stable-slim",   # any Debian/Ubuntu amd64 image
+  uvr_version   = "v0.2.15",              # pin the uvr binary version
+  port          = 3838,
+  host          = "0.0.0.0",
+  extra_sysreqs = c("libsqlite3-dev"),    # injected before `uvr sync`
+  bootstrap     = TRUE,                   # auto-create missing uvr files
+  frozen        = FALSE,                  # see above
+  write         = TRUE                    # FALSE -> return Dockerfile only
+)
+```
+
 ## Example Workflow
 
 1. **Prepare Your Shiny Application**:  
