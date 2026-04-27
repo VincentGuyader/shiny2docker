@@ -121,7 +121,8 @@ create_dockerignore <- function(path = ".dockerignore") {
                             ".gitignore",
                             "manifest.json",
                             "rsconnect/",
-                            ".Rproj.user")
+                            ".Rproj.user",
+                            ".Rprofile")
 
   writeLines(dockerignore_content, con = path)
 
