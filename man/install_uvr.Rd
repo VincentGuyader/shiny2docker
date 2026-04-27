@@ -5,14 +5,15 @@
 \title{Install the \code{uvr} CLI binary for the current platform}
 \usage{
 install_uvr(
-  dest = file.path(Sys.getenv("HOME"), ".local", "bin"),
+  dest = uvr_default_install_dir(),
   version = "latest",
   force = FALSE
 )
 }
 \arguments{
 \item{dest}{Directory where the binary should land. Created if missing.
-Defaults to \verb{~/.local/bin/}.}
+Default is platform-aware: \verb{~/.local/bin/} on Unix (Linux/macOS),
+\verb{\%LOCALAPPDATA\%/shiny2docker/bin/} on Windows.}
 
 \item{version}{Release tag, e.g. \code{"v0.2.15"}, or \code{"latest"}.}
 

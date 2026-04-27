@@ -67,6 +67,36 @@ uvr_validate_sysreqs <- function(sysreqs) {
   invisible(TRUE)
 }
 
+#' Default install location for the uvr binary on the current platform
+#'
+#' - Unix (Linux/macOS): `~/.local/bin/` -- matches the official `install.sh`.
+#'   Often already on `PATH`.
+#' - Windows: `%LOCALAPPDATA%/shiny2docker/bin/` (e.g.
+#'   `C:/Users/<you>/AppData/Local/shiny2docker/bin/`). Not on `PATH` by
+#'   default; the install function prints a `setx`-flavoured hint.
+#' @noRd
+uvr_default_install_dir <- function() {
+  if (.Platform$OS.type == "windows") {
+    base <- Sys.getenv("LOCALAPPDATA",
+                       unset = file.path(Sys.getenv("USERPROFILE"),
+                                         "AppData", "Local"))
+    file.path(base, "shiny2docker", "bin")
+  } else {
+    file.path(Sys.getenv("HOME"), ".local", "bin")
+  }
+}
+
+#' How to put `dest` on PATH for the user's shell, formatted for help text
+#' @noRd
+uvr_path_hint <- function(dest) {
+  if (.Platform$OS.type == "windows") {
+    sprintf("setx PATH \"%%PATH%%;%s\"  (then restart your shell)",
+            normalizePath(dest, winslash = "\\", mustWork = FALSE))
+  } else {
+    sprintf("export PATH=\"%s:$PATH\"  (add to ~/.bashrc or ~/.zshrc)", dest)
+  }
+}
+
 #' Detect the uvr release asset that matches the current host
 #' @return A list with `name` (asset filename) and `ext` (".tar.gz" or ".zip").
 #' @noRd
@@ -103,17 +133,18 @@ uvr_locate_or_install <- function(interactive_install = interactive()) {
   bin_name <- if (.Platform$OS.type == "windows") "uvr.exe" else "uvr"
   bin <- unname(Sys.which("uvr"))
   if (nzchar(bin) && file.exists(bin)) return(bin)
-  candidate <- file.path(Sys.getenv("HOME"), ".local", "bin", bin_name)
+  candidate <- file.path(uvr_default_install_dir(), bin_name)
   if (file.exists(candidate)) return(candidate)
 
   if (isTRUE(interactive_install)) {
+    dest <- uvr_default_install_dir()
     cli::cli_alert_info(paste(
       "{.code uvr} CLI is required to bootstrap a uvr project but isn't",
       "installed yet."
     ))
-    ans <- tolower(trimws(readline(
-      "Download and install it now to ~/.local/bin? [Y/n] "
-    )))
+    ans <- tolower(trimws(readline(sprintf(
+      "Download and install it now to %s? [Y/n] ", dest
+    ))))
     if (ans %in% c("", "y", "yes", "o", "oui")) {
       return(install_uvr())
     }
@@ -139,14 +170,15 @@ uvr_locate_or_install <- function(interactive_install = interactive()) {
 #' [shiny2docker_uvr()] picks it up automatically.
 #'
 #' @param dest Directory where the binary should land. Created if missing.
-#'   Defaults to `~/.local/bin/`.
+#'   Default is platform-aware: `~/.local/bin/` on Unix (Linux/macOS),
+#'   `%LOCALAPPDATA%/shiny2docker/bin/` on Windows.
 #' @param version Release tag, e.g. `"v0.2.15"`, or `"latest"`.
 #' @param force If `TRUE`, install even when `uvr` is already on `PATH`.
 #'
 #' @return Invisibly, the absolute path to the installed binary.
 #'
 #' @export
-install_uvr <- function(dest    = file.path(Sys.getenv("HOME"), ".local", "bin"),
+install_uvr <- function(dest    = uvr_default_install_dir(),
                         version = "latest",
                         force   = FALSE) {
 
@@ -208,8 +240,8 @@ install_uvr <- function(dest    = file.path(Sys.getenv("HOME"), ".local", "bin")
   if (!nzchar(Sys.which("uvr"))) {
     cli::cli_alert_warning(paste0(
       dest, " is not on your PATH for future R sessions. ",
-      "Add this line to your shell rc to make it permanent: ",
-      "export PATH=\"", dest, ":$PATH\""
+      "Make it permanent with: ",
+      uvr_path_hint(dest)
     ))
   }
   invisible(out)
