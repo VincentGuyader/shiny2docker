@@ -240,11 +240,20 @@ test_that("bootstrap = FALSE errors immediately when uvr files are missing", {
 test_that("bootstrap = TRUE without uvr CLI errors with install instructions", {
   tmp <- tempfile("uvr_no_cli_"); dir.create(tmp)
   writeLines("library(shiny)", file.path(tmp, "app.R"))
-  withr::local_envvar(PATH = "/nonexistent")
+  withr::local_envvar(PATH = "/nonexistent",
+                      HOME = tempfile("fake_home_"))
+  # Non-interactive locate path: we expect a clean error pointing at install_uvr()
   expect_error(
-    shiny2docker_uvr(path = tmp, bootstrap = TRUE, write = FALSE),
-    "uvr.*CLI not found"
+    uvr_locate_or_install(interactive_install = FALSE),
+    "shiny2docker::install_uvr"
   )
+})
+
+test_that("uvr_detect_asset returns the right asset for known platforms", {
+  # We only assert the broad shape: no platform crash + plausible filename.
+  asset <- uvr_detect_asset()
+  expect_true(grepl("^uvr-.+\\.(tar\\.gz|zip)$", asset$name))
+  expect_true(asset$ext %in% c(".tar.gz", ".zip"))
 })
 
 test_that("shiny2docker_uvr creates the parent directory of `output` if missing", {

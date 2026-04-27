@@ -67,6 +67,154 @@ uvr_validate_sysreqs <- function(sysreqs) {
   invisible(TRUE)
 }
 
+#' Detect the uvr release asset that matches the current host
+#' @return A list with `name` (asset filename) and `ext` (".tar.gz" or ".zip").
+#' @noRd
+uvr_detect_asset <- function() {
+  os   <- Sys.info()[["sysname"]]
+  arch <- Sys.info()[["machine"]]
+  if (arch == "arm64") arch <- "aarch64"
+  if (os == "Linux") {
+    return(list(name = sprintf("uvr-%s-unknown-linux-gnu.tar.gz", arch), ext = ".tar.gz"))
+  }
+  if (os == "Darwin") {
+    return(list(name = sprintf("uvr-%s-apple-darwin.tar.gz", arch), ext = ".tar.gz"))
+  }
+  if (os == "Windows") {
+    return(list(name = "uvr-x86_64-pc-windows-msvc.zip", ext = ".zip"))
+  }
+  stop("Unsupported platform: ", os, "/", arch,
+       ". See https://github.com/nbafrank/uvr/releases for a manual download.",
+       call. = FALSE)
+}
+
+#' Locate the `uvr` binary, optionally offering to install it
+#'
+#' Looks on `PATH` first, then in the default install location
+#' (`~/.local/bin/uvr`). When neither is present and the session is
+#' interactive, prompts the user to run `install_uvr()` automatically.
+#'
+#' @param interactive_install Logical. If `TRUE` (default in interactive
+#'   sessions), prompt to install when the binary is missing. When `FALSE`,
+#'   raise an actionable error instead.
+#' @return Absolute path to the `uvr` binary.
+#' @noRd
+uvr_locate_or_install <- function(interactive_install = interactive()) {
+  bin_name <- if (.Platform$OS.type == "windows") "uvr.exe" else "uvr"
+  bin <- unname(Sys.which("uvr"))
+  if (nzchar(bin) && file.exists(bin)) return(bin)
+  candidate <- file.path(Sys.getenv("HOME"), ".local", "bin", bin_name)
+  if (file.exists(candidate)) return(candidate)
+
+  if (isTRUE(interactive_install)) {
+    cli::cli_alert_info(paste(
+      "{.code uvr} CLI is required to bootstrap a uvr project but isn't",
+      "installed yet."
+    ))
+    ans <- tolower(trimws(readline(
+      "Download and install it now to ~/.local/bin? [Y/n] "
+    )))
+    if (ans %in% c("", "y", "yes", "o", "oui")) {
+      return(install_uvr())
+    }
+  }
+
+  stop(
+    "`uvr` CLI not found on PATH; needed to bootstrap a uvr project.\n",
+    "Easiest: run `shiny2docker::install_uvr()` from R (downloads and ",
+    "installs the binary for your platform).\n",
+    "Or via shell: ",
+    "curl -fsSL https://raw.githubusercontent.com/nbafrank/uvr/main/install.sh | sh\n",
+    "If you've already bootstrapped the project elsewhere, make sure ",
+    "`uvr.toml`, `uvr.lock` and `.r-version` are at the project root.",
+    call. = FALSE
+  )
+}
+
+#' Install the `uvr` CLI binary for the current platform
+#'
+#' Downloads the matching release asset from
+#' \url{https://github.com/nbafrank/uvr/releases} and places the `uvr`
+#' executable under `dest` (default `~/.local/bin/`). After install,
+#' [shiny2docker_uvr()] picks it up automatically.
+#'
+#' @param dest Directory where the binary should land. Created if missing.
+#'   Defaults to `~/.local/bin/`.
+#' @param version Release tag, e.g. `"v0.2.15"`, or `"latest"`.
+#' @param force If `TRUE`, install even when `uvr` is already on `PATH`.
+#'
+#' @return Invisibly, the absolute path to the installed binary.
+#'
+#' @export
+install_uvr <- function(dest    = file.path(Sys.getenv("HOME"), ".local", "bin"),
+                        version = "latest",
+                        force   = FALSE) {
+
+  if (!isTRUE(force)) {
+    existing <- unname(Sys.which("uvr"))
+    if (nzchar(existing) && file.exists(existing)) {
+      cli::cli_alert_info(paste0(
+        "uvr already on PATH at ", existing,
+        "; pass force = TRUE to reinstall."
+      ))
+      return(invisible(existing))
+    }
+  }
+
+  asset <- uvr_detect_asset()
+  url <- if (identical(version, "latest")) {
+    sprintf("https://github.com/nbafrank/uvr/releases/latest/download/%s",
+            asset$name)
+  } else {
+    tag <- if (startsWith(version, "v")) version else paste0("v", version)
+    sprintf("https://github.com/nbafrank/uvr/releases/download/%s/%s",
+            tag, asset$name)
+  }
+
+  tmp <- tempfile(fileext = asset$ext)
+  ext_dir <- tempfile("uvr_extract_"); dir.create(ext_dir)
+  on.exit({
+    unlink(tmp, force = TRUE)
+    unlink(ext_dir, recursive = TRUE, force = TRUE)
+  }, add = TRUE)
+
+  cli::cli_alert_info("Downloading {.url {url}}")
+  utils::download.file(url, tmp, mode = "wb", quiet = TRUE)
+
+  if (asset$ext == ".zip") {
+    utils::unzip(tmp, exdir = ext_dir)
+  } else {
+    utils::untar(tmp, exdir = ext_dir)
+  }
+
+  bin_name <- if (.Platform$OS.type == "windows") "uvr.exe" else "uvr"
+  src <- file.path(ext_dir, bin_name)
+  if (!file.exists(src)) {
+    found <- list.files(ext_dir, recursive = TRUE,
+                        pattern = paste0("^", bin_name, "$"),
+                        full.names = TRUE)
+    if (length(found) == 0L) {
+      stop("`", bin_name, "` not found in archive ", asset$name, call. = FALSE)
+    }
+    src <- found[1]
+  }
+
+  dir.create(dest, recursive = TRUE, showWarnings = FALSE)
+  out <- file.path(dest, bin_name)
+  file.copy(src, out, overwrite = TRUE)
+  if (.Platform$OS.type != "windows") Sys.chmod(out, mode = "0755")
+
+  cli::cli_alert_success("Installed uvr to {.path {out}}")
+  if (!nzchar(Sys.which("uvr"))) {
+    cli::cli_alert_warning(paste0(
+      dest, " is not on your PATH for future R sessions. ",
+      "Add this line to your shell rc to make it permanent: ",
+      "export PATH=\"", dest, ":$PATH\""
+    ))
+  }
+  invisible(out)
+}
+
 #' Bootstrap a uvr project layout if files are missing
 #'
 #' Mirrors what `shiny2docker()` does for `renv` (auto-creating `renv.lock` via
@@ -95,18 +243,7 @@ uvr_bootstrap <- function(path,
                           document          = TRUE,
                           folder_to_exclude = c("renv", ".uvr")) {
 
-  uvr_bin <- Sys.which("uvr")
-  if (!nzchar(uvr_bin)) {
-    stop(
-      "`uvr` CLI not found on PATH; needed to bootstrap a uvr project.\n",
-      "Install it once: ",
-      "curl -fsSL https://raw.githubusercontent.com/nbafrank/uvr/main/install.sh | sh\n",
-      "Or from R: install.packages(\"uvr\"); uvr::install_uvr()\n",
-      "If you've already bootstrapped the project elsewhere, ",
-      "make sure `uvr.toml`, `uvr.lock` and `.r-version` are at '", path, "/'.",
-      call. = FALSE
-    )
-  }
+  uvr_bin <- uvr_locate_or_install()
 
   uvr_toml  <- file.path(path, "uvr.toml")
   uvr_lock  <- file.path(path, "uvr.lock")
