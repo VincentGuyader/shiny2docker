@@ -7,3 +7,4 @@
 ^README\.Rmd$
 ^\.github$
 ^\.gitlab-ci\.yml$
+^tests/testthat/fixtures$

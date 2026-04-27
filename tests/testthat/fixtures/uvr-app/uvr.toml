@@ -1,0 +1,5 @@
+[project]
+name = "uvr-poc"
+
+[dependencies]
+shiny = "*"
