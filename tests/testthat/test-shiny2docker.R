@@ -20,3 +20,26 @@ unlink("dummy_app/renv.lock",force = TRUE)
 unlink("dummy_app/Dockerfile",force = TRUE)
 unlink("dummy_app/.dockerignore",force = TRUE)
 })
+
+test_that("shiny2docker forwards renv_version to dock_from_renv", {
+  unlink("dummy_app/renv.lock", force = TRUE)
+  unlink("dummy_app/Dockerfile", force = TRUE)
+  unlink("dummy_app/.dockerignore", force = TRUE)
+
+  if (isTRUE(testthat:::on_cran())) {
+    file.copy(from = "dummy_app/renv.lock.cran.lock",
+              to = "dummy_app/renv.lock")
+  }
+
+  # When renv_version is forwarded as NULL, dock_from_renv() takes the
+  # "latest renv" branch and must NOT use remotes::install_version (which
+  # is the default branch when renv_version is missing). The exact install
+  # line differs across dockerfiler versions, but the absence of
+  # `install_version` is invariant.
+  out <- shiny2docker(path = "dummy_app/", renv_version = NULL)
+  expect_false(any(grepl("install_version", out$Dockerfile)))
+
+  unlink("dummy_app/renv.lock", force = TRUE)
+  unlink("dummy_app/Dockerfile", force = TRUE)
+  unlink("dummy_app/.dockerignore", force = TRUE)
+})

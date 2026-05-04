@@ -18,7 +18,8 @@ shiny2docker(
   user = NULL,
   dependencies = NA,
   sysreqs_platform = "ubuntu",
-  folder_to_exclude = c("renv")
+  folder_to_exclude = c("renv"),
+  renv_version
 )
 }
 \arguments{
@@ -58,6 +59,12 @@ non-working package, and/or the installation might fail.)
 \item{sysreqs_platform}{System requirements platform.\code{ubuntu} by default. If \code{NULL}, then the  current platform is used. Can be : "ubuntu-22.04" if needed to fit with the \code{FROM} Operating System. Only debian or ubuntu based images are supported}
 
 \item{folder_to_exclude}{Folder to exclude during scan to detect packages}
+
+\item{renv_version}{character. Optional. Forwarded to
+\code{\link[dockerfiler:dock_from_renv]{dockerfiler::dock_from_renv()}}. By default (parameter omitted), the
+renv version recorded in the \code{renv.lock} file is used. Set to \code{NULL}
+to install the latest available renv from the configured repos
+(faster build, no \code{remotes} dependency).}
 }
 \value{
 An object of class \code{dockerfiler}, representing the generated Dockerfile. This object can be further manipulated using \code{dockerfiler} functions before being written to disk.
