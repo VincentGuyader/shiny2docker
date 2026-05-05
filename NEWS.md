@@ -1,4 +1,10 @@
 
+# shiny2docker (development version)
+
+* `shiny2docker()` gains a `renv_version` parameter, forwarded to
+  `dockerfiler::dock_from_renv()`. Set to `NULL` to bootstrap with the
+  latest available renv (skipping the `remotes` dependency entirely).
+
 # shiny2docker 0.0.3
 
 * `set_gitlab_ci()` now accepts a `tags` parameter so you can specify one or

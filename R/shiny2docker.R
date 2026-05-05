@@ -25,6 +25,11 @@
 #'     non-working package, and/or the installation might fail.)
 #' @param sysreqs_platform System requirements platform.`ubuntu` by default. If `NULL`, then the  current platform is used. Can be : "ubuntu-22.04" if needed to fit with the `FROM` Operating System. Only debian or ubuntu based images are supported
 #' @param folder_to_exclude Folder to exclude during scan to detect packages
+#' @param renv_version character. Optional. Forwarded to
+#'   [dockerfiler::dock_from_renv()]. By default (parameter omitted), the
+#'   renv version recorded in the `renv.lock` file is used. Set to `NULL`
+#'   to install the latest available renv from the configured repos
+#'   (faster build, no `remotes` dependency).
 #'
 #' @return An object of class `dockerfiler`, representing the generated Dockerfile. This object can be further manipulated using `dockerfiler` functions before being written to disk.
 #'
@@ -72,7 +77,8 @@ shiny2docker <- function(path = ".",
                          user = NULL,
                          dependencies = NA,
                          sysreqs_platform = "ubuntu",
-                         folder_to_exclude = c("renv")) {
+                         folder_to_exclude = c("renv"),
+                         renv_version) {
 
   if (missing(path)) {
     if (yesno::yesno2("path is missing. Do you want to use the current directory?")) {
@@ -90,9 +96,8 @@ shiny2docker <- function(path = ".",
     create_dockerignore(path = file.path(dirname(output), ".dockerignore"))
   }
 
-  dock <- dockerfiler::dock_from_renv(
+  dock_from_renv_args <- list(
     lockfile = lockfile,
-
     FROM = FROM,
     AS = AS,
     sysreqs = sysreqs,
@@ -103,9 +108,16 @@ shiny2docker <- function(path = ".",
     user = user,
     dependencies = dependencies,
     sysreqs_platform = sysreqs_platform
-
-
   )
+  # Forward renv_version only when supplied so that dock_from_renv() keeps
+  # its own default ("read the version from the lockfile") -- which differs
+  # from `renv_version = NULL` ("install the latest renv"). Single-bracket
+  # assignment on the list preserves an explicit NULL (the regular `$<-` /
+  # `[[<-` would delete the entry instead).
+  if (!missing(renv_version)) {
+    dock_from_renv_args["renv_version"] <- list(renv_version)
+  }
+  dock <- do.call(dockerfiler::dock_from_renv, dock_from_renv_args)
   dock$WORKDIR("/srv/shiny-server/")
   dock$COPY(from = ".", to = "/srv/shiny-server/")
   dock$EXPOSE(3838)
