@@ -17,7 +17,7 @@ License: MIT + file LICENSE
 Imports: 
     attachment (>= 0.4.3),
     cli,
-    dockerfiler,
+    dockerfiler (>= 0.2.6),
     here,
     yesno
 Encoding: UTF-8

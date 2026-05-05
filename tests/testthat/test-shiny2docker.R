@@ -43,3 +43,25 @@ test_that("shiny2docker forwards renv_version to dock_from_renv", {
   unlink("dummy_app/Dockerfile", force = TRUE)
   unlink("dummy_app/.dockerignore", force = TRUE)
 })
+
+test_that("shiny2docker forwards an explicit renv_version to dock_from_renv", {
+  unlink("dummy_app/renv.lock", force = TRUE)
+  unlink("dummy_app/Dockerfile", force = TRUE)
+  unlink("dummy_app/.dockerignore", force = TRUE)
+
+  if (isTRUE(testthat:::on_cran())) {
+    file.copy(from = "dummy_app/renv.lock.cran.lock",
+              to = "dummy_app/renv.lock")
+  }
+
+  # An explicit version string must reach dock_from_renv() and produce a
+  # remotes::install_version("renv", version = "1.0.3") line.
+  out <- shiny2docker(path = "dummy_app/", renv_version = "1.0.3")
+  expect_true(
+    any(grepl("install_version.*renv.*1\\.0\\.3", out$Dockerfile))
+  )
+
+  unlink("dummy_app/renv.lock", force = TRUE)
+  unlink("dummy_app/Dockerfile", force = TRUE)
+  unlink("dummy_app/.dockerignore", force = TRUE)
+})
