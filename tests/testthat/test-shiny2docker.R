@@ -44,6 +44,59 @@ test_that("shiny2docker forwards renv_version to dock_from_renv", {
   unlink("dummy_app/.dockerignore", force = TRUE)
 })
 
+test_that("shiny2docker errors when path missing and user declines", {
+  testthat::with_mocked_bindings(
+    yesno2 = function(...) {
+      FALSE
+    },
+    .package = "yesno",
+    code = {
+      expect_error(
+        shiny2docker(),
+        regexp = "Please supply a valid path"
+      )
+    }
+  )
+})
+
+test_that("shiny2docker uses here::here() when path missing and user accepts", {
+  skip_if_not_installed("mockery")
+
+  unlink("dummy_app/renv.lock", force = TRUE)
+  unlink("dummy_app/Dockerfile", force = TRUE)
+  unlink("dummy_app/.dockerignore", force = TRUE)
+
+  if (isTRUE(testthat:::on_cran())) {
+    file.copy(from = "dummy_app/renv.lock.cran.lock",
+              to = "dummy_app/renv.lock")
+  }
+
+  app_dir <- normalizePath("dummy_app", mustWork = TRUE)
+
+  testthat::with_mocked_bindings(
+    yesno2 = function(...) {
+      TRUE
+    },
+    .package = "yesno",
+    code = {
+      testthat::with_mocked_bindings(
+        here = function(...) {
+          app_dir
+        },
+        .package = "here",
+        code = {
+          out <- shiny2docker()
+          expect_s3_class(out, "Dockerfile")
+        }
+      )
+    }
+  )
+
+  unlink("dummy_app/renv.lock", force = TRUE)
+  unlink("dummy_app/Dockerfile", force = TRUE)
+  unlink("dummy_app/.dockerignore", force = TRUE)
+})
+
 test_that("shiny2docker forwards an explicit renv_version to dock_from_renv", {
   unlink("dummy_app/renv.lock", force = TRUE)
   unlink("dummy_app/Dockerfile", force = TRUE)

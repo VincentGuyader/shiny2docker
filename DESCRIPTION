@@ -1,36 +1,36 @@
 Package: shiny2docker
 Title: Generate Dockerfiles for 'Shiny' Applications
-Version: 0.0.3
+Version: 0.0.4
 Authors@R: 
-    person("Vincent", "Guyader",
-           email = "vincent@thinkr.fr",
-           role = c("aut", "cre"),
+    person("Vincent", "Guyader", , "vincent@thinkr.fr", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-0671-9270"))
-Description: 
-    Automates the creation of Dockerfiles for deploying 'Shiny' applications.
-    By integrating with 'renv' for dependency management and leveraging Docker-based
-    solutions, it simplifies the process of containerizing 'Shiny' apps,
-    ensuring reproducibility and consistency across different environments.
-    Additionally, it facilitates the setup of CI/CD pipelines for building Docker images
-    on both GitLab and GitHub.
+Description: Automates the creation of Dockerfiles for deploying 'Shiny'
+    applications.  By integrating with 'renv' for dependency management
+    and leveraging Docker-based solutions, it simplifies the process of
+    containerizing 'Shiny' apps, ensuring reproducibility and consistency
+    across different environments.  Additionally, it facilitates the setup
+    of CI/CD pipelines for building Docker images on both GitLab and
+    GitHub.
 License: MIT + file LICENSE
+URL: https://github.com/VincentGuyader/shiny2docker
+BugReports: https://github.com/VincentGuyader/shiny2docker/issues
 Imports: 
     attachment (>= 0.4.3),
     cli,
     dockerfiler (>= 0.2.6),
     here,
     yesno
+Suggests:
+    knitr,
+    mockery,
+    renv,
+    rmarkdown,
+    rstudioapi,
+    shiny,
+    testthat (>= 3.0.0)
+VignetteBuilder: 
+    knitr
+Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
-URL: https://github.com/VincentGuyader/shiny2docker
-BugReports: https://github.com/VincentGuyader/shiny2docker/issues
-Suggests: 
-    shiny,
-    renv,
-    testthat (>= 3.0.0),
-    knitr,
-    rmarkdown,
-    rstudioapi
-Config/testthat/edition: 3
-VignetteBuilder: knitr
+RoxygenNote: 7.3.3
