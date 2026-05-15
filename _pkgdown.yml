@@ -1,0 +1,4 @@
+url: https://vincentguyader.github.io/shiny2docker/
+
+template:
+  bootstrap: 5
