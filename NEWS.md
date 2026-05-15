@@ -1,9 +1,11 @@
 
-# shiny2docker (development version)
+# shiny2docker 0.0.4
 
 * `shiny2docker()` gains a `renv_version` parameter, forwarded to
   `dockerfiler::dock_from_renv()`. Set to `NULL` to bootstrap with the
   latest available renv (skipping the `remotes` dependency entirely).
+* Minimum `dockerfiler` version bumped to `>= 0.2.6` for the
+  `renv_version` argument.
 
 # shiny2docker 0.0.3
 
