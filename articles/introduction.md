@@ -1,0 +1,127 @@
+# Containerizing Shiny Applications with shiny2docker
+
+## Introduction
+
+`shiny2docker` is an R package designed to streamline the process of
+containerizing Shiny applications using Docker. This vignette
+demonstrates how to generate a Dockerfile for your Shiny application,
+customize it, and configure GitLab CI to build and deploy your Docker
+image.
+
+## Generating a Dockerfile
+
+The main function,
+[`shiny2docker()`](https://vincentguyader.github.io/shiny2docker/reference/shiny2docker.md),
+automates the creation of a Dockerfile. It does the following:
+
+- Utilizes a `renv.lock` file to capture your R package dependencies.
+- Generates a `.dockerignore` file to exclude unnecessary files,
+  reducing build time and image size.
+- Creates a Dockerfile that includes instructions to install system
+  dependencies, R packages, and launch your Shiny app.
+
+To generate a Dockerfile in your current directory, simply run:
+
+``` r
+
+library(shiny2docker)
+
+# Generate a Dockerfile in the current directory
+shiny2docker(path = ".")
+```
+
+Alternatively, you can specify custom paths for your Shiny application,
+the `renv.lock` file, and the output Dockerfile:
+
+``` r
+
+library(shiny2docker)
+
+# Generate a Dockerfile with specific paths
+shiny2docker(
+  path = "path/to/your/app",
+  lockfile = "path/to/your/app/renv.lock",
+  output = "path/to/your/app/Dockerfile"
+)
+```
+
+## Customizing the Dockerfile
+
+The
+[`shiny2docker()`](https://vincentguyader.github.io/shiny2docker/reference/shiny2docker.md)
+function returns an object of class `dockerfiler`. This object can be
+further manipulated to add custom instructions before writing the
+Dockerfile to disk. For example, you may want to set an environment
+variable:
+
+``` r
+
+# Create the dockerfiler object
+docker_obj <- shiny2docker()
+
+# Add environment variables
+docker_obj$add_after(  cmd = "ENV ARROW_WITH_S3=1",  after = 1)
+docker_obj$add_after(  cmd = "ENV ARROW_S3=ON",after = 1)
+
+
+# Write the updated Dockerfile to disk
+docker_obj$write("Dockerfile")
+```
+
+## Configuring CI/CD for Docker Builds
+
+### GitLab CI for Docker Builds
+
+The package provides the
+[`set_gitlab_ci()`](https://vincentguyader.github.io/shiny2docker/reference/set_gitlab_ci.md)
+function to simplify the process of configuring a GitLab CI pipeline.
+This pipeline is designed to build your Docker image and push it to the
+GitLab container registry.
+
+``` r
+
+# Copy the .gitlab-ci.yml file to the current directory
+set_gitlab_ci(path = ".")
+
+# Specify runner tags
+set_gitlab_ci(path = ".", tags = c("shiny_build", "prod"))
+```
+
+Once the `.gitlab-ci.yml` file is in place, you can integrate it with
+GitLab CI/CD to automate your Docker image build and deployment process.
+
+### GitHub Actions for Docker Builds
+
+The package also provides the
+[`set_github_action()`](https://vincentguyader.github.io/shiny2docker/reference/set_github_action.md)
+function, which simplifies the process of configuring a GitHub Actions
+pipeline. This pipeline is designed to build your Docker image and push
+the created image to the GitHub Container Registry.
+
+``` r
+
+# Copy the docker-build.yml file to the .github/workflows/ directory
+set_github_action(path = ".")
+```
+
+Once the `docker-build.yml` file is in place, you can integrate it with
+GitHub Actions to automate the Docker image build and deployment
+process, allowing you to continuously build and deploy your
+containerized Shiny applications.
+
+## Conclusion
+
+`shiny2docker` simplifies containerizing Shiny applications by
+automating Dockerfile creation and CI configuration. By integrating with
+`renv` for dependency management and providing a customizable
+`dockerfiler` object, it offers a flexible workflow for deploying Shiny
+apps in containerized environments.
+
+For further details, please refer to the package documentation and visit
+the [dockerfiler GitHub
+repository](https://github.com/ThinkR-open/dockerfiler).
+
+## References
+
+- [renv: Project Environments for R](https://rstudio.github.io/renv/)
+- [GitLab CI/CD Documentation](https://docs.gitlab.com/ee/ci/)
